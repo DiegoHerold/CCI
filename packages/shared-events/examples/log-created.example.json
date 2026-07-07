@@ -1,0 +1,12 @@
+{
+  "event_id": "evt_log_123",
+  "event_type": "log.created",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:10:00Z",
+  "correlation_id": "corr_123",
+  "producer": "log-service",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "execution_id": "execution_123",
+  "payload": { "level": "INFO", "message": "Conferência concluída." }
+}

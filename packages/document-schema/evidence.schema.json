@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/documents/evidence.schema.json",
+  "title": "Document Evidence",
+  "type": "object",
+  "required": ["document_id"],
+  "properties": {
+    "document_id": { "type": "string" },
+    "page": { "type": ["integer", "null"], "minimum": 1 },
+    "row": { "type": ["integer", "null"], "minimum": 1 },
+    "column": { "type": ["string", "null"] },
+    "cell": { "type": ["string", "null"] },
+    "text": { "type": ["string", "null"] },
+    "bounding_box": {
+      "type": ["object", "null"],
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

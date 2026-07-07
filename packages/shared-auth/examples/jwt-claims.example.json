@@ -1,0 +1,10 @@
+{
+  "sub": "user_123",
+  "email": "usuario@empresa.com",
+  "name": "Usuário",
+  "roles": ["analyst"],
+  "permissions": ["clients.read"],
+  "client_ids": ["client_123"],
+  "iat": 1777622400,
+  "exp": 1777626000
+}

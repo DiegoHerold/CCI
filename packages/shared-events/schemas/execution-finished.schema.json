@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/execution-finished.schema.json",
+  "title": "execution.finished",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "execution.finished" },
+        "payload": {
+          "type": "object",
+          "required": ["status", "totals"],
+          "properties": {
+            "status": { "const": "finished" },
+            "totals": {
+              "type": "object",
+              "required": ["approved", "divergent", "pending", "error"],
+              "properties": {
+                "approved": { "type": "integer", "minimum": 0 },
+                "divergent": { "type": "integer", "minimum": 0 },
+                "pending": { "type": "integer", "minimum": 0 },
+                "error": { "type": "integer", "minimum": 0 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

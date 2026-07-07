@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/rule-executed.schema.json",
+  "title": "rule.executed",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "rule.executed" },
+        "payload": {
+          "type": "object",
+          "required": ["rule_id", "status"],
+          "properties": {
+            "rule_id": { "type": "string" },
+            "status": { "type": "string", "enum": ["approved", "divergent", "error", "pending", "not_applicable", "needs_review"] }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

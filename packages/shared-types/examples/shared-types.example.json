@@ -1,0 +1,50 @@
+{
+  "user": {
+    "user_id": "user_123",
+    "email": "usuario@empresa.com",
+    "name": "Usuário Exemplo",
+    "roles": ["analyst"],
+    "permissions": ["clients.read", "documents.import"],
+    "active": true
+  },
+  "client": {
+    "client_id": "client_123",
+    "name": "Empresa Exemplo",
+    "cnpj": "00000000000100"
+  },
+  "competence": {
+    "competence_id": "competence_2026_05",
+    "client_id": "client_123",
+    "reference": "2026-05",
+    "status": "waiting_documents"
+  },
+  "execution": {
+    "execution_id": "execution_123",
+    "client_id": "client_123",
+    "competence_id": "competence_2026_05",
+    "status": "pending",
+    "started_at": null,
+    "finished_at": null
+  },
+  "result": {
+    "result_id": "result_123",
+    "execution_id": "execution_123",
+    "rule_id": "rule_123",
+    "status": "approved",
+    "message": "Valores conferem."
+  },
+  "audit_entry": {
+    "audit_id": "audit_123",
+    "action": "execution.started",
+    "occurred_at": "2026-05-01T10:00:00Z",
+    "actor_id": "user_123",
+    "details": {}
+  },
+  "report": {
+    "report_id": "report_123",
+    "execution_id": "execution_123",
+    "format": "pdf",
+    "status": "pending",
+    "storage_key": null
+  }
+}

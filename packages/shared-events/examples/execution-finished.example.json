@@ -1,0 +1,15 @@
+{
+  "event_id": "evt_finished_123",
+  "event_type": "execution.finished",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:08:00Z",
+  "correlation_id": "corr_123",
+  "producer": "execution-control-service",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "execution_id": "execution_123",
+  "payload": {
+    "status": "finished",
+    "totals": { "approved": 30, "divergent": 2, "pending": 0, "error": 0 }
+  }
+}

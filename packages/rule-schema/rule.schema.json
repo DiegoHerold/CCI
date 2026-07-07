@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/rules/rule.schema.json",
+  "title": "CCI Rule",
+  "type": "object",
+  "required": ["rule_id", "client_id", "model_id", "name", "description", "version", "status", "logic", "required_variables"],
+  "properties": {
+    "rule_id": { "type": "string" },
+    "client_id": { "type": "string" },
+    "model_id": { "type": "string" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "version": { "type": "integer", "minimum": 1 },
+    "status": { "type": "string", "enum": ["draft", "active", "inactive", "archived"] },
+    "logic": { "$ref": "#/$defs/RuleLogic" },
+    "required_variables": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "tolerance": { "type": ["number", "null"], "minimum": 0 },
+    "created_by": { "type": ["string", "null"] },
+    "created_at": { "type": ["string", "null"], "format": "date-time" },
+    "updated_at": { "type": ["string", "null"], "format": "date-time" },
+    "activated_at": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Operand": {
+      "type": ["string", "number", "integer", "boolean", "null"]
+    },
+    "RuleLogic": {
+      "type": "object",
+      "required": ["operator"],
+      "properties": {
+        "operator": {
+          "type": "string",
+          "enum": ["equals", "not_equals", "greater_than", "less_than", "greater_or_equal", "less_or_equal", "exists", "not_exists", "difference_less_than", "sum_equals", "formula", "and", "or", "if_then"]
+        },
+        "left": { "$ref": "#/$defs/Operand" },
+        "right": { "$ref": "#/$defs/Operand" },
+        "items": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "conditions": { "type": "array", "items": { "$ref": "#/$defs/RuleLogic" }, "minItems": 1 },
+        "tolerance": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

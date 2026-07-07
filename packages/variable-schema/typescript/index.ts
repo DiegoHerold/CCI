@@ -1,0 +1,4 @@
+export type VariableType = "currency" | "number" | "integer" | "percentage" | "date" | "competence" | "text" | "boolean" | "account_code" | "cnpj" | "cpf" | "list" | "object";
+export type VariableStatus = "extracted" | "normalized" | "confirmed" | "corrected" | "ignored" | "need_review" | "used_in_rule";
+export interface Evidence { document_id: string; page?: number | null; row?: number | null; column?: string | null; cell?: string | null; text?: string | null; bounding_box?: Record<string, number> | null }
+export interface Variable { variable_id: string; client_id: string; competence_id: string; document_id: string; key: string; label: string; type: VariableType; value: unknown; raw_value: unknown; status: VariableStatus; confidence: number; evidence: Evidence; created_at?: string | null; updated_at?: string | null; normalized_by?: string | null; confirmed_by?: string | null }

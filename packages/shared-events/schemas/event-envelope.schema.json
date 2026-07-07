@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/event-envelope.schema.json",
+  "title": "CCI Event Envelope",
+  "type": "object",
+  "required": ["event_id", "event_type", "version", "occurred_at", "correlation_id", "producer", "payload"],
+  "properties": {
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": { "type": "string", "minLength": 1 },
+    "version": { "type": "integer", "minimum": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "correlation_id": { "type": "string", "minLength": 1 },
+    "causation_id": { "type": ["string", "null"] },
+    "producer": { "type": "string", "minLength": 1 },
+    "client_id": { "type": ["string", "null"] },
+    "competence_id": { "type": ["string", "null"] },
+    "execution_id": { "type": ["string", "null"] },
+    "document_id": { "type": ["string", "null"] },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

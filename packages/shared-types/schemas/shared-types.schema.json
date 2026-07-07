@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/shared-types.schema.json",
+  "title": "CCI Shared Types",
+  "type": "object",
+  "properties": {
+    "user": { "$ref": "#/$defs/User" },
+    "client": { "$ref": "#/$defs/Client" },
+    "competence": { "$ref": "#/$defs/Competence" },
+    "execution": { "$ref": "#/$defs/Execution" },
+    "result": { "$ref": "#/$defs/Result" },
+    "audit_entry": { "$ref": "#/$defs/AuditEntry" },
+    "report": { "$ref": "#/$defs/Report" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Role": {
+      "type": "string",
+      "enum": ["admin", "coordinator", "analyst", "reviewer", "read_only"]
+    },
+    "CompetenceStatus": {
+      "type": "string",
+      "enum": ["waiting_documents", "documents_imported", "documents_mapped", "extracting", "variables_ready", "executing", "finished", "blocked", "error"]
+    },
+    "DocumentType": {
+      "type": "string",
+      "enum": ["balancete", "guia_inss", "guia_fgts", "folha_pagamento", "relatorio_fiscal", "relatorio_contabil", "extrato", "outro", "desconhecido"]
+    },
+    "DocumentStatus": {
+      "type": "string",
+      "enum": ["imported", "classified", "ambiguous", "missing", "confirmed", "rejected", "extracted", "error"]
+    },
+    "VariableStatus": {
+      "type": "string",
+      "enum": ["extracted", "normalized", "confirmed", "corrected", "ignored", "need_review", "used_in_rule"]
+    },
+    "RuleStatus": {
+      "type": "string",
+      "enum": ["draft", "active", "inactive", "archived"]
+    },
+    "ExecutionStatus": {
+      "type": "string",
+      "enum": ["pending", "running", "paused", "finished", "failed", "cancelled"]
+    },
+    "ResultStatus": {
+      "type": "string",
+      "enum": ["approved", "divergent", "error", "pending", "not_applicable", "needs_review"]
+    },
+    "ReportStatus": {
+      "type": "string",
+      "enum": ["pending", "generating", "generated", "failed"]
+    },
+    "Permission": {
+      "type": "object",
+      "required": ["name"],
+      "properties": { "name": { "type": "string", "pattern": "^[a-z_]+\\.[a-z_]+$" } },
+      "additionalProperties": false
+    },
+    "User": {
+      "type": "object",
+      "required": ["user_id", "email", "name", "roles", "permissions"],
+      "properties": {
+        "user_id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "roles": { "type": "array", "items": { "$ref": "#/$defs/Role" }, "uniqueItems": true },
+        "permissions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "active": { "type": "boolean", "default": true }
+      },
+      "additionalProperties": false
+    },
+    "Client": {
+      "type": "object",
+      "required": ["client_id", "name"],
+      "properties": {
+        "client_id": { "type": "string" },
+        "name": { "type": "string" },
+        "cnpj": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "Competence": {
+      "type": "object",
+      "required": ["competence_id", "client_id", "reference", "status"],
+      "properties": {
+        "competence_id": { "type": "string" },
+        "client_id": { "type": "string" },
+        "reference": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+        "status": { "$ref": "#/$defs/CompetenceStatus" }
+      },
+      "additionalProperties": false
+    },
+    "Document": {
+      "type": "object",
+      "required": ["document_id", "client_id", "competence_id", "filename", "document_type", "status"],
+      "properties": {
+        "document_id": { "type": "string" },
+        "client_id": { "type": "string" },
+        "competence_id": { "type": "string" },
+        "filename": { "type": "string" },
+        "document_type": { "$ref": "#/$defs/DocumentType" },
+        "status": { "$ref": "#/$defs/DocumentStatus" }
+      },
+      "additionalProperties": false
+    },
+    "Variable": {
+      "type": "object",
+      "required": ["variable_id", "key", "value", "status"],
+      "properties": {
+        "variable_id": { "type": "string" },
+        "key": { "type": "string" },
+        "value": true,
+        "status": { "$ref": "#/$defs/VariableStatus" }
+      },
+      "additionalProperties": false
+    },
+    "Rule": {
+      "type": "object",
+      "required": ["rule_id", "name", "version", "status", "logic"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "name": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "status": { "$ref": "#/$defs/RuleStatus" },
+        "logic": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "Execution": {
+      "type": "object",
+      "required": ["execution_id", "client_id", "competence_id", "status"],
+      "properties": {
+        "execution_id": { "type": "string" },
+        "client_id": { "type": "string" },
+        "competence_id": { "type": "string" },
+        "status": { "$ref": "#/$defs/ExecutionStatus" },
+        "started_at": { "type": ["string", "null"], "format": "date-time" },
+        "finished_at": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "Result": {
+      "type": "object",
+      "required": ["result_id", "execution_id", "rule_id", "status"],
+      "properties": {
+        "result_id": { "type": "string" },
+        "execution_id": { "type": "string" },
+        "rule_id": { "type": "string" },
+        "status": { "$ref": "#/$defs/ResultStatus" },
+        "message": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "AuditEntry": {
+      "type": "object",
+      "required": ["audit_id", "action", "occurred_at", "actor_id"],
+      "properties": {
+        "audit_id": { "type": "string" },
+        "action": { "type": "string" },
+        "occurred_at": { "type": "string", "format": "date-time" },
+        "actor_id": { "type": "string" },
+        "details": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "Report": {
+      "type": "object",
+      "required": ["report_id", "execution_id", "format", "status"],
+      "properties": {
+        "report_id": { "type": "string" },
+        "execution_id": { "type": "string" },
+        "format": { "type": "string", "enum": ["pdf", "xlsx", "annotated_trial_balance"] },
+        "status": { "$ref": "#/$defs/ReportStatus" },
+        "storage_key": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "EventEnvelope": {
+      "type": "object",
+      "required": ["event_id", "event_type", "version", "occurred_at", "correlation_id", "producer", "payload"],
+      "properties": {
+        "event_id": { "type": "string" },
+        "event_type": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "occurred_at": { "type": "string", "format": "date-time" },
+        "correlation_id": { "type": "string" },
+        "producer": { "type": "string" },
+        "payload": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

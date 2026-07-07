@@ -1,0 +1,12 @@
+{
+  "event_id": "evt_result_123",
+  "event_type": "result.created",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:07:00Z",
+  "correlation_id": "corr_123",
+  "producer": "result-service",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "execution_id": "execution_123",
+  "payload": { "result_id": "result_123", "status": "approved" }
+}

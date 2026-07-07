@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/variables/variable.schema.json",
+  "title": "CCI Variable",
+  "type": "object",
+  "required": ["variable_id", "client_id", "competence_id", "document_id", "key", "label", "type", "value", "raw_value", "status", "confidence", "evidence"],
+  "properties": {
+    "variable_id": { "type": "string" },
+    "client_id": { "type": "string" },
+    "competence_id": { "type": "string" },
+    "document_id": { "type": "string" },
+    "key": { "type": "string", "minLength": 1 },
+    "label": { "type": "string" },
+    "type": { "type": "string", "enum": ["currency", "number", "integer", "percentage", "date", "competence", "text", "boolean", "account_code", "cnpj", "cpf", "list", "object"] },
+    "value": true,
+    "raw_value": true,
+    "status": { "type": "string", "enum": ["extracted", "normalized", "confirmed", "corrected", "ignored", "need_review", "used_in_rule"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "evidence": { "$ref": "#/$defs/Evidence" },
+    "created_at": { "type": ["string", "null"], "format": "date-time" },
+    "updated_at": { "type": ["string", "null"], "format": "date-time" },
+    "normalized_by": { "type": ["string", "null"] },
+    "confirmed_by": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Evidence": {
+      "type": "object",
+      "required": ["document_id"],
+      "properties": {
+        "document_id": { "type": "string" },
+        "page": { "type": ["integer", "null"], "minimum": 1 },
+        "row": { "type": ["integer", "null"], "minimum": 1 },
+        "column": { "type": ["string", "null"] },
+        "cell": { "type": ["string", "null"] },
+        "text": { "type": ["string", "null"] },
+        "bounding_box": { "type": ["object", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

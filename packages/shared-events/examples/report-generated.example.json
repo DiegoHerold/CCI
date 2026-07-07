@@ -1,0 +1,12 @@
+{
+  "event_id": "evt_report_123",
+  "event_type": "report.generated",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:09:00Z",
+  "correlation_id": "corr_123",
+  "producer": "report-service",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "execution_id": "execution_123",
+  "payload": { "report_id": "report_123", "format": "pdf", "storage_key": "reports/report_123.pdf" }
+}

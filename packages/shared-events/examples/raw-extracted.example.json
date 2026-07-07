@@ -1,0 +1,12 @@
+{
+  "event_id": "evt_raw_123",
+  "event_type": "raw.extracted",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:03:00Z",
+  "correlation_id": "corr_123",
+  "producer": "extraction-orchestrator",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "document_id": "doc_123",
+  "payload": { "extractor": "pdf-extractor-worker", "data_ref": "processed/doc_123/raw.json" }
+}

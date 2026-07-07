@@ -1,0 +1,18 @@
+{
+  "variable_id": "var_123",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "document_id": "doc_123",
+  "key": "guia_inss.valor_total",
+  "label": "Valor total da guia INSS",
+  "type": "currency",
+  "value": 3500.0,
+  "raw_value": "R$ 3.500,00",
+  "status": "confirmed",
+  "confidence": 0.96,
+  "evidence": {
+    "document_id": "doc_123",
+    "page": 1,
+    "text": "Valor Total R$ 3.500,00"
+  }
+}

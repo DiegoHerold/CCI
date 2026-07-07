@@ -1,0 +1,11 @@
+{
+  "rule_id": "rule_124",
+  "client_id": "client_123",
+  "model_id": "model_123",
+  "name": "Validar CNPJ",
+  "description": "Confirma que o CNPJ normalizado está disponível.",
+  "version": 1,
+  "status": "active",
+  "logic": { "operator": "exists", "left": "empresa.cnpj" },
+  "required_variables": []
+}

@@ -1,0 +1,13 @@
+{
+  "event_id": "evt_classified_123",
+  "event_type": "document.classified",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:01:00Z",
+  "correlation_id": "corr_123",
+  "causation_id": "evt_file_123",
+  "producer": "document-classification-service",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "document_id": "doc_123",
+  "payload": { "document_type": "balancete", "confidence": 0.98 }
+}

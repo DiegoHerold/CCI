@@ -1,0 +1,12 @@
+{
+  "event_id": "evt_execution_123",
+  "event_type": "execution.started",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:05:00Z",
+  "correlation_id": "corr_123",
+  "producer": "execution-control-service",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "execution_id": "execution_123",
+  "payload": { "rule_count": 32 }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/variables-ready.schema.json",
+  "title": "variables.ready",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "variables.ready" },
+        "payload": {
+          "type": "object",
+          "required": ["variable_count"],
+          "properties": { "variable_count": { "type": "integer", "minimum": 0 } },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "status": "approved",
+  "operator": "equals",
+  "left_value": 3500.0,
+  "right_value": 3500.0,
+  "difference": 0.0,
+  "message": "Valores conferem dentro da tolerância.",
+  "details": []
+}

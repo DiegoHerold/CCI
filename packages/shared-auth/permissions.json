@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "permissions": [
+    "users.create", "users.read", "users.update", "users.disable",
+    "clients.create", "clients.read", "clients.update", "clients.delete", "clients.assign_user",
+    "models.create", "models.read", "models.update", "models.version", "models.activate",
+    "documents.import", "documents.read", "documents.confirm", "documents.reject",
+    "variables.read", "variables.confirm", "variables.correct", "variables.ignore",
+    "rules.create", "rules.read", "rules.update", "rules.version", "rules.activate", "rules.disable",
+    "executions.start", "executions.read", "executions.cancel", "executions.reprocess",
+    "results.read", "audit.read",
+    "reports.generate", "reports.read", "reports.download",
+    "logs.read"
+  ]
+}

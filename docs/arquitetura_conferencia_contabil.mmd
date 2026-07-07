@@ -1,0 +1,109 @@
+flowchart TB
+
+  subgraph L1["1. Interface"]
+    User["Usuário"]
+    Web["Frontend Web\nNext.js + React"]
+    Realtime["Realtime Gateway\nSSE ou WebSocket"]
+  end
+
+  subgraph L2["2. Entrada da Plataforma"]
+    BFF["BFF / API Gateway\nNestJS ou FastAPI"]
+  end
+
+  subgraph L3["3. Control Plane"]
+    Auth["Identity Service\nUsuários, login e permissões"]
+    Client["Client Service\nClientes e competências"]
+    Model["Conference Model Service\nModelos e documentos esperados"]
+    Rule["Rule Service\nRegras e versões"]
+    Schedule["Schedule Service\nAgendamentos"]
+  end
+
+  subgraph L4["4. Data Plane"]
+    Ingestion["Document Ingestion Service\nUpload, ZIP, pasta e agente"]
+    Classification["Document Classification Service\nIdentificação de documentos"]
+    Extraction["Extraction Orchestrator\nCoordena extração"]
+    Normalization["Normalization Service\nNormaliza dados"]
+    Variables["Variable Registry Service\nCatálogo de variáveis"]
+  end
+
+  subgraph L5["5. Execução"]
+    Execution["Execution Control Service\nInicia conferências"]
+    Temporal["Temporal\nWorkflows duráveis"]
+    Workers["Workers\nPDF, Excel, Word, TXT, OCR, IA e Regras"]
+    Result["Result Service\nResultados das conferências"]
+  end
+
+  subgraph L6["6. Saída"]
+    Audit["Audit Service\nAuditoria de negócio"]
+    Report["Report Service\nPDF, Excel e balancete anotado"]
+    Logs["Log Service\nLogs claros para usuário"]
+  end
+
+  subgraph L7["7. Infraestrutura"]
+    Bus["Event Bus\nNATS ou RabbitMQ"]
+    Database["PostgreSQL\nSchemas por domínio"]
+    Storage["MinIO ou S3\nArquivos e relatórios"]
+    Redis["Redis\nCache e status temporário"]
+    Observability["OpenTelemetry\nSentry e Grafana"]
+  end
+
+  User --> Web
+  Web -->|REST HTTPS| BFF
+  Realtime -->|logs e status| Web
+
+  BFF -->|gRPC| Auth
+  BFF -->|gRPC| Client
+  BFF -->|gRPC| Model
+  BFF -->|gRPC| Rule
+  BFF -->|gRPC| Schedule
+
+  BFF -->|REST ou gRPC| Ingestion
+  Ingestion --> Storage
+  Ingestion -. "evento: arquivo importado" .-> Bus
+
+  Bus -. "evento" .-> Classification
+  Classification -. "documento identificado" .-> Bus
+  Bus -. "evento" .-> Extraction
+
+  Extraction --> Temporal
+  Temporal --> Workers
+  Workers --> Storage
+  Workers -. "dados brutos extraidos" .-> Bus
+
+  Bus -. "evento" .-> Normalization
+  Normalization -. "variaveis normalizadas" .-> Bus
+  Bus -. "evento" .-> Variables
+
+  BFF -->|iniciar execução| Execution
+  Schedule -. "agendamento disparado" .-> Bus
+  Bus -. "evento" .-> Execution
+
+  Execution --> Temporal
+  Temporal --> Workers
+  Workers -. "regra executada" .-> Bus
+  Bus -. "evento" .-> Result
+
+  Result -. "resultado criado" .-> Bus
+  Bus -. "evento" .-> Audit
+  Bus -. "execução finalizada" .-> Report
+  Bus -. "eventos e logs" .-> Logs
+
+  Logs --> Realtime
+  Report --> Storage
+
+  Auth --> Database
+  Client --> Database
+  Model --> Database
+  Rule --> Database
+  Variables --> Database
+  Result --> Database
+  Audit --> Database
+  Report --> Database
+
+  BFF --> Redis
+  Execution --> Redis
+
+  BFF --> Observability
+  Ingestion --> Observability
+  Workers --> Observability
+  Logs --> Observability

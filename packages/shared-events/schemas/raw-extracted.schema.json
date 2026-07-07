@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/raw-extracted.schema.json",
+  "title": "raw.extracted",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "raw.extracted" },
+        "payload": {
+          "type": "object",
+          "required": ["extractor", "data_ref"],
+          "properties": {
+            "extractor": { "type": "string" },
+            "data_ref": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

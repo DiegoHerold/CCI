@@ -1,0 +1,16 @@
+{
+  "rule_id": "rule_125",
+  "client_id": "client_123",
+  "model_id": "model_123",
+  "name": "Conferir total de guias",
+  "description": "Compara a soma de guias com o total contábil.",
+  "version": 1,
+  "status": "draft",
+  "logic": {
+    "operator": "sum_equals",
+    "items": ["guia_inss.valor", "guia_fgts.valor"],
+    "right": "balancete.total_encargos",
+    "tolerance": 0.01
+  },
+  "required_variables": ["guia_inss.valor", "guia_fgts.valor", "balancete.total_encargos"]
+}

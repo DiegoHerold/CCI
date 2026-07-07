@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/execution-started.schema.json",
+  "title": "execution.started",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "execution.started" },
+        "payload": {
+          "type": "object",
+          "required": ["rule_count"],
+          "properties": { "rule_count": { "type": "integer", "minimum": 0 } },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "event_id": "evt_file_123",
+  "event_type": "file.imported",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:00:00Z",
+  "correlation_id": "corr_123",
+  "causation_id": null,
+  "producer": "document-ingestion-service",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "document_id": "doc_123",
+  "payload": {
+    "filename": "balancete_2026_05.pdf",
+    "storage_bucket": "raw-documents",
+    "storage_key": "client_123/2026-05/doc_123.pdf",
+    "sha256_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  }
+}

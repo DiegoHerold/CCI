@@ -1,0 +1,193 @@
+name: cci-platform
+
+services:
+  postgres-app:
+    image: postgres:16
+    container_name: cci-postgres-app
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cci_platform}
+      POSTGRES_USER: ${POSTGRES_USER:-cci}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cci_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_app_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cci} -d ${POSTGRES_DB:-cci_platform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - cci-network
+
+  temporal-postgres:
+    image: postgres:16
+    container_name: cci-temporal-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${TEMPORAL_POSTGRES_DB:-temporal}
+      POSTGRES_USER: ${TEMPORAL_POSTGRES_USER:-temporal}
+      POSTGRES_PASSWORD: ${TEMPORAL_POSTGRES_PASSWORD:-temporal_password}
+    volumes:
+      - temporal_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TEMPORAL_POSTGRES_USER:-temporal} -d ${TEMPORAL_POSTGRES_DB:-temporal}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - cci-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: cci-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cci-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: cci-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-cci}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-cci_password}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - cci-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: cci-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-cci_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-cci_minio_password}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - cci-network
+
+  minio-setup:
+    image: minio/mc:latest
+    container_name: cci-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-cci_minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-cci_minio_password}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        until mc alias set local http://minio:9000 "$${MINIO_ACCESS_KEY}" "$${MINIO_SECRET_KEY}"; do
+          sleep 2
+        done
+        mc mb --ignore-existing local/raw-documents
+        mc mb --ignore-existing local/processed-documents
+        mc mb --ignore-existing local/reports
+        mc mb --ignore-existing local/evidences
+    restart: "no"
+    networks:
+      - cci-network
+
+  temporal:
+    image: temporalio/auto-setup:1.29.7
+    container_name: cci-temporal
+    restart: unless-stopped
+    depends_on:
+      temporal-postgres:
+        condition: service_healthy
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: ${TEMPORAL_POSTGRES_USER:-temporal}
+      POSTGRES_PWD: ${TEMPORAL_POSTGRES_PASSWORD:-temporal_password}
+      POSTGRES_SEEDS: ${TEMPORAL_POSTGRES_HOST:-temporal-postgres}
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CLI_ADDRESS: temporal:7233
+    ports:
+      - "7233:7233"
+    networks:
+      - cci-network
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: cci-temporal-ui
+    restart: unless-stopped
+    depends_on:
+      temporal:
+        condition: service_started
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8233:8080"
+    networks:
+      - cci-network
+
+  bff:
+    build:
+      context: ./apps/bff
+    container_name: cci-bff
+    restart: unless-stopped
+    env_file:
+      - path: ./.env
+        required: false
+    depends_on:
+      - postgres-app
+      - redis
+      - rabbitmq
+      - minio
+      - temporal
+    ports:
+      - "8000:8000"
+    networks:
+      - cci-network
+
+networks:
+  cci-network:
+    name: cci-network
+    driver: bridge
+
+volumes:
+  postgres_app_data:
+  temporal_postgres_data:
+  redis_data:
+  rabbitmq_data:
+  minio_data:

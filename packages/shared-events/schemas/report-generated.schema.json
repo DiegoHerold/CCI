@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/report-generated.schema.json",
+  "title": "report.generated",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "report.generated" },
+        "payload": {
+          "type": "object",
+          "required": ["report_id", "format", "storage_key"],
+          "properties": {
+            "report_id": { "type": "string" },
+            "format": { "type": "string", "enum": ["pdf", "xlsx", "annotated_trial_balance"] },
+            "storage_key": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

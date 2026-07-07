@@ -1,0 +1,12 @@
+{
+  "event_id": "evt_rule_123",
+  "event_type": "rule.executed",
+  "version": 1,
+  "occurred_at": "2026-05-01T10:06:00Z",
+  "correlation_id": "corr_123",
+  "producer": "rule-worker",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_05",
+  "execution_id": "execution_123",
+  "payload": { "rule_id": "rule_123", "status": "approved" }
+}

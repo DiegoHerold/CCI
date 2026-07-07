@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/file-imported.schema.json",
+  "title": "file.imported",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "event_type": { "const": "file.imported" },
+        "payload": {
+          "type": "object",
+          "required": ["filename", "storage_bucket", "storage_key", "sha256_hash"],
+          "properties": {
+            "filename": { "type": "string" },
+            "storage_bucket": { "type": "string" },
+            "storage_key": { "type": "string" },
+            "sha256_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

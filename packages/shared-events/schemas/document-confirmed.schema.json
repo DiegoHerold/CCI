@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/document-confirmed.schema.json",
+  "title": "document.confirmed",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "document.confirmed" },
+        "payload": {
+          "type": "object",
+          "required": ["confirmed_by"],
+          "properties": { "confirmed_by": { "type": "string" } },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

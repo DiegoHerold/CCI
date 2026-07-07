@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/result-created.schema.json",
+  "title": "result.created",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "result.created" },
+        "payload": {
+          "type": "object",
+          "required": ["result_id", "status"],
+          "properties": {
+            "result_id": { "type": "string" },
+            "status": { "type": "string", "enum": ["approved", "divergent", "error", "pending", "not_applicable", "needs_review"] }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}
