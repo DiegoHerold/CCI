@@ -35,14 +35,8 @@ def test_platform_status_is_placeholder() -> None:
     assert set(payload["services"].values()) == {"not_connected"}
 
 
-def test_placeholder_lists_are_empty() -> None:
-    clients_response = client.get("/api/v1/clients")
+def test_remaining_placeholder_execution_list_is_empty() -> None:
     executions_response = client.get("/api/v1/executions")
-
-    assert clients_response.status_code == 200
-    assert clients_response.json()["items"] == []
-    assert clients_response.json()["total"] == 0
-    assert clients_response.json()["source"] == "placeholder"
 
     assert executions_response.status_code == 200
     assert executions_response.json()["items"] == []

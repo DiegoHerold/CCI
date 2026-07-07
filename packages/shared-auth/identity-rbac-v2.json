@@ -1,0 +1,34 @@
+{
+  "contract": "cci.identity.rbac",
+  "version": 2,
+  "roles": ["ADMIN", "MANAGER", "OPERATOR", "VIEWER"],
+  "permissions": [
+    "users:read", "users:create", "users:update", "users:disable", "users:reset-password",
+    "identity:read", "identity:manage",
+    "conferences:read", "conferences:create", "conferences:update", "conferences:execute",
+    "clients:read", "clients:create", "clients:update", "clients:disable", "clients:archive",
+    "client-users:read", "client-users:manage",
+    "client-competencies:read", "client-competencies:create", "client-competencies:update",
+    "client-competencies:close", "client-competencies:archive",
+    "client-folders:read", "client-folders:update", "client-folders:preview",
+    "client-context:read"
+  ],
+  "rolePermissions": {
+    "ADMIN": ["*"],
+    "MANAGER": [
+      "users:read", "conferences:read", "conferences:create", "conferences:update", "conferences:execute",
+      "clients:read", "clients:update", "client-users:read",
+      "client-competencies:read", "client-competencies:create", "client-competencies:update", "client-competencies:close",
+      "client-folders:read", "client-folders:update", "client-folders:preview", "client-context:read"
+    ],
+    "OPERATOR": [
+      "conferences:read", "conferences:create", "conferences:execute",
+      "clients:read", "client-competencies:read", "client-competencies:create", "client-competencies:update",
+      "client-folders:read", "client-folders:preview", "client-context:read"
+    ],
+    "VIEWER": [
+      "conferences:read", "clients:read", "client-competencies:read",
+      "client-folders:read", "client-folders:preview", "client-context:read"
+    ]
+  }
+}

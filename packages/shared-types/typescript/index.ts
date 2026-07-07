@@ -7,10 +7,17 @@ export type RuleStatus = "draft" | "active" | "inactive" | "archived";
 export type ExecutionStatus = "pending" | "running" | "paused" | "finished" | "failed" | "cancelled";
 export type ResultStatus = "approved" | "divergent" | "error" | "pending" | "not_applicable" | "needs_review";
 export type ReportStatus = "pending" | "generating" | "generated" | "failed";
+export type ClientOperationalStatus = "ACTIVE" | "INACTIVE" | "ARCHIVED";
+export type ClientCompetencyStatus = "OPEN" | "PREPARING" | "READY_FOR_CONFERENCE" | "IN_CONFERENCE" | "REVIEW" | "CLOSED" | "ARCHIVED";
+export type ClientRole = "CLIENT_MANAGER" | "CLIENT_OPERATOR" | "CLIENT_VIEWER";
+export type ClientResponsibilityArea = "ACCOUNTING" | "FISCAL" | "PAYROLL" | "LEGAL" | "GENERAL";
 
 export interface Permission { name: string }
 export interface User { user_id: string; email: string; name: string; roles: Role[]; permissions: string[]; active: boolean }
 export interface Client { client_id: string; name: string; cnpj?: string | null }
+export interface ClientOperational { id: string; code?: string | null; name: string; tradeName?: string | null; cnpj: string; cnpjNormalized: string; status: ClientOperationalStatus; taxRegime?: string | null; city?: string | null; state?: string | null; defaultFolderPath?: string | null; competenceFolderPattern: string }
+export interface ClientCompetency { id: string; clientId: string; period: string; year: number; month: number; status: ClientCompetencyStatus; folderPath?: string | null }
+export interface ClientUserLink { id: string; clientId: string; userId: string; clientRole: ClientRole; status: "ACTIVE" | "INACTIVE"; responsibilityArea: ClientResponsibilityArea; isPrimaryResponsible: boolean }
 export interface Competence { competence_id: string; client_id: string; reference: string; status: CompetenceStatus }
 export interface Document { document_id: string; client_id: string; competence_id: string; filename: string; document_type: DocumentType; status: DocumentStatus }
 export interface Variable { variable_id: string; key: string; value: unknown; status: VariableStatus }

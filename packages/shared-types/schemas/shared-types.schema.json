@@ -6,6 +6,9 @@
   "properties": {
     "user": { "$ref": "#/$defs/User" },
     "client": { "$ref": "#/$defs/Client" },
+    "client_operational": { "$ref": "#/$defs/ClientOperational" },
+    "client_competency": { "$ref": "#/$defs/ClientCompetency" },
+    "client_user_link": { "$ref": "#/$defs/ClientUserLink" },
     "competence": { "$ref": "#/$defs/Competence" },
     "execution": { "$ref": "#/$defs/Execution" },
     "result": { "$ref": "#/$defs/Result" },
@@ -78,6 +81,53 @@
         "cnpj": { "type": ["string", "null"] }
       },
       "additionalProperties": false
+    },
+    "ClientOperational": {
+      "type": "object",
+      "required": ["id", "name", "cnpj", "cnpjNormalized", "status", "competenceFolderPattern"],
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": ["string", "null"] },
+        "name": { "type": "string" },
+        "tradeName": { "type": ["string", "null"] },
+        "cnpj": { "type": "string" },
+        "cnpjNormalized": { "type": "string", "pattern": "^[0-9]{14}$" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "ARCHIVED"] },
+        "taxRegime": { "type": ["string", "null"], "enum": ["SIMPLES_NACIONAL", "LUCRO_PRESUMIDO", "LUCRO_REAL", "MEI", "IMUNE_ISENTA", "NAO_INFORMADO", null] },
+        "city": { "type": ["string", "null"] },
+        "state": { "type": ["string", "null"], "pattern": "^[A-Z]{2}$" },
+        "defaultFolderPath": { "type": ["string", "null"] },
+        "competenceFolderPattern": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "ClientCompetency": {
+      "type": "object",
+      "required": ["id", "clientId", "period", "year", "month", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "period": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+        "year": { "type": "integer", "minimum": 1900, "maximum": 2200 },
+        "month": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "status": { "type": "string", "enum": ["OPEN", "PREPARING", "READY_FOR_CONFERENCE", "IN_CONFERENCE", "REVIEW", "CLOSED", "ARCHIVED"] },
+        "folderPath": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "ClientUserLink": {
+      "type": "object",
+      "required": ["id", "clientId", "userId", "clientRole", "status", "responsibilityArea"],
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "userId": { "type": "string" },
+        "clientRole": { "type": "string", "enum": ["CLIENT_MANAGER", "CLIENT_OPERATOR", "CLIENT_VIEWER"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "responsibilityArea": { "type": "string", "enum": ["ACCOUNTING", "FISCAL", "PAYROLL", "LEGAL", "GENERAL"] },
+        "isPrimaryResponsible": { "type": "boolean" }
+      },
+      "additionalProperties": true
     },
     "Competence": {
       "type": "object",

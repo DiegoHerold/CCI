@@ -25,6 +25,22 @@ class CompetenceStatus(str, Enum):
     ERROR = "error"
 
 
+class ClientOperationalStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    ARCHIVED = "ARCHIVED"
+
+
+class ClientCompetencyStatus(str, Enum):
+    OPEN = "OPEN"
+    PREPARING = "PREPARING"
+    READY_FOR_CONFERENCE = "READY_FOR_CONFERENCE"
+    IN_CONFERENCE = "IN_CONFERENCE"
+    REVIEW = "REVIEW"
+    CLOSED = "CLOSED"
+    ARCHIVED = "ARCHIVED"
+
+
 class DocumentType(str, Enum):
     BALANCETE = "balancete"
     GUIA_INSS = "guia_inss"
@@ -107,6 +123,41 @@ class Client(BaseModel):
     client_id: str
     name: str
     cnpj: str | None = None
+
+
+class ClientOperational(BaseModel):
+    id: str
+    code: str | None = None
+    name: str
+    trade_name: str | None = None
+    cnpj: str
+    cnpj_normalized: str
+    status: ClientOperationalStatus
+    tax_regime: str | None = None
+    city: str | None = None
+    state: str | None = None
+    default_folder_path: str | None = None
+    competence_folder_pattern: str
+
+
+class ClientCompetency(BaseModel):
+    id: str
+    client_id: str
+    period: str
+    year: int
+    month: int
+    status: ClientCompetencyStatus
+    folder_path: str | None = None
+
+
+class ClientUserLink(BaseModel):
+    id: str
+    client_id: str
+    user_id: str
+    client_role: str
+    status: str
+    responsibility_area: str
+    is_primary_responsible: bool = False
 
 
 class Competence(BaseModel):

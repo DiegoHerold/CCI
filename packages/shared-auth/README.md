@@ -17,3 +17,8 @@ ganhar distribuição/versionamento próprios.
 
 `identity-session-v1.json` registra as claims, TTLs padrão e a divisão de
 responsabilidade de transporte entre Identity e BFF introduzida na Fase 4.1.
+
+`identity-rbac-v2.json` adiciona as permissões globais do Client Service sem
+alterar o contrato experimental da Fase 2 nem remover a versão 1. O vínculo
+ativo no Client Service continua obrigatório além da permissão global; apenas
+`ADMIN` possui bypass explícito de vínculo.

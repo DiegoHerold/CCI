@@ -5,3 +5,7 @@ Fonte comum para os tipos e estados centrais da CCI. O JSON Schema é canônico;
 Contém usuários, clientes, competências, documentos, variáveis, regras, execuções, resultados, auditoria, relatórios e envelope de eventos. Não contém persistência, autenticação real nem integrações.
 
 O arquivo `examples/shared-types.example.json` demonstra objetos válidos. Novos estados devem ser adicionados primeiro ao schema canônico e depois refletidos em Python e TypeScript.
+
+A Fase 6 acrescenta, sem remover os contratos iniciais, `ClientOperational`,
+`ClientCompetency` e `ClientUserLink` para o domínio operacional do Client
+Service.

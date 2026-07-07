@@ -1,4 +1,4 @@
-.PHONY: up down restart logs ps clean infra-up infra-down postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health bff-logs bff-shell bff-test bff-health
+.PHONY: up down restart logs ps clean infra-up infra-down postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health bff-logs bff-shell bff-test bff-health
 
 up:
 	docker compose up -d
@@ -58,6 +58,22 @@ identity-test:
 identity-health:
 	curl -fsS http://localhost:8101/health
 	curl -fsS http://localhost:8101/ready
+
+client-logs:
+	docker compose logs -f client-service
+
+client-shell:
+	docker compose exec client-service sh
+
+client-migrate:
+	docker compose run --rm client-service alembic upgrade head
+
+client-test:
+	docker compose --profile test run --rm client-service-test
+
+client-health:
+	curl -fsS http://localhost:8102/health
+	curl -fsS http://localhost:8102/ready
 
 bff-logs:
 	docker compose logs -f bff

@@ -25,6 +25,22 @@ class PermissionName(StrEnum):
     CONFERENCES_CREATE = "conferences:create"
     CONFERENCES_UPDATE = "conferences:update"
     CONFERENCES_EXECUTE = "conferences:execute"
+    CLIENTS_READ = "clients:read"
+    CLIENTS_CREATE = "clients:create"
+    CLIENTS_UPDATE = "clients:update"
+    CLIENTS_DISABLE = "clients:disable"
+    CLIENTS_ARCHIVE = "clients:archive"
+    CLIENT_USERS_READ = "client-users:read"
+    CLIENT_USERS_MANAGE = "client-users:manage"
+    CLIENT_COMPETENCIES_READ = "client-competencies:read"
+    CLIENT_COMPETENCIES_CREATE = "client-competencies:create"
+    CLIENT_COMPETENCIES_UPDATE = "client-competencies:update"
+    CLIENT_COMPETENCIES_CLOSE = "client-competencies:close"
+    CLIENT_COMPETENCIES_ARCHIVE = "client-competencies:archive"
+    CLIENT_FOLDERS_READ = "client-folders:read"
+    CLIENT_FOLDERS_UPDATE = "client-folders:update"
+    CLIENT_FOLDERS_PREVIEW = "client-folders:preview"
+    CLIENT_CONTEXT_READ = "client-context:read"
 
 
 ALL_PERMISSIONS = frozenset(PermissionName)
@@ -38,6 +54,17 @@ ROLE_PERMISSIONS: dict[RoleName, frozenset[PermissionName]] = {
             PermissionName.CONFERENCES_CREATE,
             PermissionName.CONFERENCES_UPDATE,
             PermissionName.CONFERENCES_EXECUTE,
+            PermissionName.CLIENTS_READ,
+            PermissionName.CLIENTS_UPDATE,
+            PermissionName.CLIENT_USERS_READ,
+            PermissionName.CLIENT_COMPETENCIES_READ,
+            PermissionName.CLIENT_COMPETENCIES_CREATE,
+            PermissionName.CLIENT_COMPETENCIES_UPDATE,
+            PermissionName.CLIENT_COMPETENCIES_CLOSE,
+            PermissionName.CLIENT_FOLDERS_READ,
+            PermissionName.CLIENT_FOLDERS_UPDATE,
+            PermissionName.CLIENT_FOLDERS_PREVIEW,
+            PermissionName.CLIENT_CONTEXT_READ,
         }
     ),
     RoleName.OPERATOR: frozenset(
@@ -45,7 +72,23 @@ ROLE_PERMISSIONS: dict[RoleName, frozenset[PermissionName]] = {
             PermissionName.CONFERENCES_READ,
             PermissionName.CONFERENCES_CREATE,
             PermissionName.CONFERENCES_EXECUTE,
+            PermissionName.CLIENTS_READ,
+            PermissionName.CLIENT_COMPETENCIES_READ,
+            PermissionName.CLIENT_COMPETENCIES_CREATE,
+            PermissionName.CLIENT_COMPETENCIES_UPDATE,
+            PermissionName.CLIENT_FOLDERS_READ,
+            PermissionName.CLIENT_FOLDERS_PREVIEW,
+            PermissionName.CLIENT_CONTEXT_READ,
         }
     ),
-    RoleName.VIEWER: frozenset({PermissionName.CONFERENCES_READ}),
+    RoleName.VIEWER: frozenset(
+        {
+            PermissionName.CONFERENCES_READ,
+            PermissionName.CLIENTS_READ,
+            PermissionName.CLIENT_COMPETENCIES_READ,
+            PermissionName.CLIENT_FOLDERS_READ,
+            PermissionName.CLIENT_FOLDERS_PREVIEW,
+            PermissionName.CLIENT_CONTEXT_READ,
+        }
+    ),
 }

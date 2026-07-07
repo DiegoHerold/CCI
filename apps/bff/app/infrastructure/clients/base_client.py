@@ -45,10 +45,13 @@ class BaseInternalClient:
         json: dict[str, Any] | None = None,
         client_ip: str | None = None,
         user_agent: str | None = None,
+        params: list[tuple[str, str]] | None = None,
     ) -> InternalResponse:
         request_options: dict[str, Any] = {}
         if json is not None:
             request_options["json"] = json
+        if params:
+            request_options["params"] = params
         async with httpx.AsyncClient(base_url=self.base_url, timeout=10.0) as client:
             response = await client.request(
                 method,

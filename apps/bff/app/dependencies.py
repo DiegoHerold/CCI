@@ -23,6 +23,10 @@ def get_identity_client() -> IdentityClient:
     return IdentityClient(get_settings().identity_service_url)
 
 
+def get_client_service_client() -> ClientServiceClient:
+    return ClientServiceClient(get_settings().client_service_url)
+
+
 def get_internal_clients() -> dict[str, BaseInternalClient]:
     settings = get_settings()
     clients: list[BaseInternalClient] = [

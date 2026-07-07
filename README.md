@@ -191,6 +191,21 @@ somente em memória.
 Consulte `docs/fase-4.1-identity-hardening.md` para fluxos, variáveis e
 limitações.
 
+## Fase 6 — Client Service
+
+Clientes, competências, vínculos, preferências e pastas lógicas agora são
+persistidos pelo `client-service` no PostgreSQL do cluster. A Web consome os
+contratos reais pelo BFF em `/api/v1/clients` e `/api/v1/client-context`.
+
+```bash
+docker compose up -d --build identity-service client-service bff
+make client-test
+make client-health
+```
+
+Consulte `docs/fase-6-client-service.md` para contratos, permissões, migration,
+auditoria e limites.
+
 ## Comandos úteis
 
 ```bash

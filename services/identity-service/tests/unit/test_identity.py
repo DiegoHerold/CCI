@@ -126,11 +126,9 @@ def test_admin_can_create_user(client: TestClient) -> None:
 
     assert response.status_code == 201
     assert response.json()["roles"] == ["OPERATOR"]
-    assert response.json()["permissions"] == [
-        "conferences:create",
-        "conferences:execute",
-        "conferences:read",
-    ]
+    assert "conferences:execute" in response.json()["permissions"]
+    assert "clients:read" in response.json()["permissions"]
+    assert "client-context:read" in response.json()["permissions"]
     assert "passwordHash" not in response.json()
 
 
@@ -195,6 +193,28 @@ def test_seed_is_idempotent_and_preserves_admin_password(
     assert after is not None
     assert after.password_hash == password_hash
     assert len(repository.list_all()) == 1
+
+
+def test_client_service_permissions_are_seeded_idempotently(
+    db_session: Session,
+) -> None:
+    from app.config import get_settings
+    from app.infrastructure.database.models import Permission, Role
+    from app.infrastructure.seed import seed_identity
+
+    seed_identity(db_session, get_settings())
+    seed_identity(db_session, get_settings())
+
+    assert db_session.get(Permission, "clients:read") is not None
+    assert db_session.get(Permission, "client-context:read") is not None
+    admin = db_session.get(Role, "ADMIN")
+    viewer = db_session.get(Role, "VIEWER")
+    assert admin is not None and "clients:create" in {
+        permission.name for permission in admin.permissions
+    }
+    assert viewer is not None and "clients:read" in {
+        permission.name for permission in viewer.permissions
+    }
 
 
 def test_admin_user_management_lifecycle(client: TestClient) -> None:

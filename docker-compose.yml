@@ -201,6 +201,40 @@ services:
     networks:
       - cci-network
 
+  client-service:
+    build:
+      context: ./services/client-service
+    container_name: cci-client-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: client-service
+      PORT: 8102
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cci}:${POSTGRES_PASSWORD:-cci_password}@postgres-app:5432/${POSTGRES_DB:-cci_platform}
+      IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8101}
+      IDENTITY_TIMEOUT_SECONDS: ${IDENTITY_TIMEOUT_SECONDS:-5}
+      DEFAULT_COMPETENCE_FOLDER_PATTERN: "{{YYYY}}/{{MM}}"
+    depends_on:
+      postgres-app:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    ports:
+      - "8102:8102"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8102/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
   bff:
     build:
       context: ./apps/bff
@@ -231,6 +265,8 @@ services:
     depends_on:
       identity-service:
         condition: service_healthy
+      client-service:
+        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -241,6 +277,40 @@ services:
         condition: service_started
     ports:
       - "8000:8000"
+    networks:
+      - cci-network
+
+  postgres-client-test:
+    image: postgres:16
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: cci_client_test
+      POSTGRES_USER: cci_test
+      POSTGRES_PASSWORD: cci_test_password
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cci_test -d cci_client_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    networks:
+      - cci-network
+
+  client-service-test:
+    build:
+      context: ./services/client-service
+    profiles: ["test"]
+    environment:
+      APP_ENV: test
+      SERVICE_NAME: client-service
+      DATABASE_URL: postgresql+psycopg://cci_test:cci_test_password@postgres-client-test:5432/cci_client_test
+      IDENTITY_SERVICE_URL: http://identity-service:8101
+      DEFAULT_COMPETENCE_FOLDER_PATTERN: "{{YYYY}}/{{MM}}"
+    depends_on:
+      postgres-client-test:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && pytest -q"
     networks:
       - cci-network
 
