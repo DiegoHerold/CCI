@@ -19,6 +19,10 @@ def settings_dependency() -> Settings:
     return get_settings()
 
 
+def get_identity_client() -> IdentityClient:
+    return IdentityClient(get_settings().identity_service_url)
+
+
 def get_internal_clients() -> dict[str, BaseInternalClient]:
     settings = get_settings()
     clients: list[BaseInternalClient] = [

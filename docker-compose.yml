@@ -161,20 +161,84 @@ services:
     networks:
       - cci-network
 
+  identity-service:
+    build:
+      context: ./services/identity-service
+    container_name: cci-identity-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: identity-service
+      PORT: 8101
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cci}:${POSTGRES_PASSWORD:-cci_password}@postgres-app:5432/${POSTGRES_DB:-cci_platform}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      AUTH_MAX_FAILED_ATTEMPTS: ${AUTH_MAX_FAILED_ATTEMPTS:-5}
+      AUTH_LOCK_MINUTES: ${AUTH_LOCK_MINUTES:-15}
+      AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS: ${AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS:-60}
+      AUTH_LOGIN_RATE_LIMIT_MAX: ${AUTH_LOGIN_RATE_LIMIT_MAX:-10}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+    depends_on:
+      postgres-app:
+        condition: service_healthy
+    ports:
+      - "8101:8101"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8101/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
   bff:
     build:
       context: ./apps/bff
     container_name: cci-bff
     restart: unless-stopped
-    env_file:
-      - path: ./.env
-        required: false
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      SERVICE_NAME: bff
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8000
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8101}
+      CLIENT_SERVICE_URL: ${CLIENT_SERVICE_URL:-http://client-service:8102}
+      CONFERENCE_MODEL_SERVICE_URL: ${CONFERENCE_MODEL_SERVICE_URL:-http://conference-model-service:8103}
+      SCHEDULE_SERVICE_URL: ${SCHEDULE_SERVICE_URL:-http://schedule-service:8104}
+      DOCUMENT_INGESTION_SERVICE_URL: ${DOCUMENT_INGESTION_SERVICE_URL:-http://document-ingestion-service:8110}
+      DOCUMENT_CLASSIFICATION_SERVICE_URL: ${DOCUMENT_CLASSIFICATION_SERVICE_URL:-http://document-classification-service:8111}
+      VARIABLE_REGISTRY_SERVICE_URL: ${VARIABLE_REGISTRY_SERVICE_URL:-http://variable-registry-service:8120}
+      RULE_SERVICE_URL: ${RULE_SERVICE_URL:-http://rule-service:8130}
+      EXECUTION_CONTROL_SERVICE_URL: ${EXECUTION_CONTROL_SERVICE_URL:-http://execution-control-service:8140}
+      RESULT_SERVICE_URL: ${RESULT_SERVICE_URL:-http://result-service:8141}
+      AUDIT_SERVICE_URL: ${AUDIT_SERVICE_URL:-http://audit-service:8150}
+      REPORT_SERVICE_URL: ${REPORT_SERVICE_URL:-http://report-service:8160}
+      LOG_SERVICE_URL: ${LOG_SERVICE_URL:-http://log-service:8170}
+      AUTH_REFRESH_COOKIE_SECURE: ${AUTH_REFRESH_COOKIE_SECURE:-false}
+      AUTH_REFRESH_COOKIE_SAMESITE: ${AUTH_REFRESH_COOKIE_SAMESITE:-lax}
+      AUTH_REFRESH_COOKIE_MAX_AGE: ${AUTH_REFRESH_COOKIE_MAX_AGE:-604800}
     depends_on:
-      - postgres-app
-      - redis
-      - rabbitmq
-      - minio
-      - temporal
+      identity-service:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      temporal:
+        condition: service_started
     ports:
       - "8000:8000"
     networks:

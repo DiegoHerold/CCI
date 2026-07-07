@@ -1,0 +1,20 @@
+{
+  "contract": "cci.identity.session",
+  "version": 1,
+  "accessToken": {
+    "claims": ["sub", "sid", "typ", "jti", "email", "roles", "permissions", "iat", "exp"],
+    "type": "access",
+    "defaultTtlSeconds": 900
+  },
+  "refreshToken": {
+    "claims": ["sub", "sid", "typ", "jti", "iat", "exp"],
+    "type": "refresh",
+    "defaultTtlSeconds": 604800,
+    "storage": "sha256-hash-only"
+  },
+  "browserTransport": {
+    "owner": "bff",
+    "refreshToken": "http-only-cookie",
+    "accessToken": "response-body-memory-only"
+  }
+}

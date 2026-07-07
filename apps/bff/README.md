@@ -1,49 +1,38 @@
 # CCI BFF
 
-Porta de entrada HTTP da CCI para a futura aplicação web. O frontend deve falar somente com o BFF; serviços internos continuam donos dos seus dados e domínios.
+Porta HTTP da futura aplicação web. O frontend fala somente com o BFF; cada
+serviço interno continua dono de seu domínio e de seus dados.
 
-## Estado da Fase 3
+## Estado após a Fase 4
 
-O BFF é funcional, mas seus dados ainda são placeholders. Não há autenticação real, persistência ou chamadas a serviços. Os clients em `app/infrastructure/clients` guardam URLs e preparam a propagação de `X-Correlation-Id`, sem realizar I/O.
+O BFF encaminha autenticação e gestão de usuários ao Identity Service por REST
+interno. Ele propaga `Authorization: Bearer ...` e `X-Correlation-Id`, mas não
+decodifica JWT nem replica regras de RBAC.
 
-Endpoints:
+Desde a Fase 4.1, o refresh token fica em cookie `HttpOnly`, `SameSite=Lax` e
+`Secure` em produção. O BFF remove o refresh token da resposta JSON; o frontend
+mantém somente o access token curto em memória.
 
-- `GET /health` e `GET /ready`;
-- `GET /api/v1/platform/status`;
-- `GET /api/v1/auth/me` — usuário de desenvolvimento;
-- `GET /api/v1/clients` e `/api/v1/executions` — listas vazias;
-- `GET /api/v1/logs/stream` — três eventos SSE de demonstração.
+Rotas integradas:
 
-O usuário de desenvolvimento será substituído pelo identity-service em fase futura.
+- `POST /api/v1/auth/login`;
+- `POST /api/v1/auth/refresh`, `/logout`, `/logout-all` e `/change-password`;
+- `GET /api/v1/auth/me`;
+- `GET|POST /api/v1/users`;
+- `GET|PATCH /api/v1/users/{id}`;
+- `PATCH /api/v1/users/{id}/disable`;
+- `POST /api/v1/users/{id}/reset-password`.
 
-## Executar
+Continuam disponíveis as rotas da Fase 3 para health, status da plataforma,
+clientes, execuções e SSE. Essas capacidades ainda são placeholders.
 
-Pelo Compose:
-
-```bash
-docker compose up -d --build bff
-curl http://localhost:8000/health
-```
-
-Localmente:
-
-```bash
-pip install -r apps/bff/requirements.txt
-uvicorn app.main:app --app-dir apps/bff --reload --port 8000
-```
-
-## Testes
+## Executar e testar
 
 ```bash
-pytest apps/bff/tests
-```
-
-Ou em container:
-
-```bash
+docker compose up -d --build identity-service bff
+make bff-health
 make bff-test
 ```
 
-## Limites
-
-Não há integração com PostgreSQL, Redis, RabbitMQ, Temporal, MinIO ou serviços internos. Nenhum evento é publicado ou consumido. Os contratos de `packages/` não foram alterados nesta fase.
+O BFF não acessa PostgreSQL nem publica eventos. O transporte interno REST é a
+etapa incremental atual; gRPC permanece como arquitetura alvo.

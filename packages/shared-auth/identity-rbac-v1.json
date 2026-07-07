@@ -1,0 +1,46 @@
+{
+  "contract": "cci.identity.rbac",
+  "version": 1,
+  "roles": ["ADMIN", "MANAGER", "OPERATOR", "VIEWER"],
+  "permissions": [
+    "users:read",
+    "users:create",
+    "users:update",
+    "users:disable",
+    "users:reset-password",
+    "identity:read",
+    "identity:manage",
+    "conferences:read",
+    "conferences:create",
+    "conferences:update",
+    "conferences:execute"
+  ],
+  "rolePermissions": {
+    "ADMIN": [
+      "users:read",
+      "users:create",
+      "users:update",
+      "users:disable",
+      "users:reset-password",
+      "identity:read",
+      "identity:manage",
+      "conferences:read",
+      "conferences:create",
+      "conferences:update",
+      "conferences:execute"
+    ],
+    "MANAGER": [
+      "users:read",
+      "conferences:read",
+      "conferences:create",
+      "conferences:update",
+      "conferences:execute"
+    ],
+    "OPERATOR": [
+      "conferences:read",
+      "conferences:create",
+      "conferences:execute"
+    ],
+    "VIEWER": ["conferences:read"]
+  }
+}

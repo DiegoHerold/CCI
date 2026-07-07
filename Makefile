@@ -1,4 +1,4 @@
-.PHONY: up down restart logs ps clean infra-up infra-down postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs bff-logs bff-shell bff-test bff-health
+.PHONY: up down restart logs ps clean infra-up infra-down postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health bff-logs bff-shell bff-test bff-health
 
 up:
 	docker compose up -d
@@ -39,6 +39,25 @@ minio-logs:
 
 temporal-logs:
 	docker compose logs -f temporal temporal-ui temporal-postgres
+
+identity-logs:
+	docker compose logs -f identity-service
+
+identity-shell:
+	docker compose exec identity-service sh
+
+identity-migrate:
+	docker compose run --rm identity-service alembic upgrade head
+
+identity-seed:
+	docker compose run --rm identity-service python -m app.infrastructure.seed
+
+identity-test:
+	docker compose run --rm --no-deps identity-service pytest -q
+
+identity-health:
+	curl -fsS http://localhost:8101/health
+	curl -fsS http://localhost:8101/ready
 
 bff-logs:
 	docker compose logs -f bff

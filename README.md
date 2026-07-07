@@ -67,6 +67,7 @@ O segundo comando apaga os bancos, buckets e filas locais.
 | Temporal Server | `localhost:7233` |
 | Temporal UI | http://localhost:8233 |
 | BFF | http://localhost:8000 |
+| Identity Service (diagnóstico) | http://localhost:8101 |
 
 O PostgreSQL do Temporal não publica porta no host e só pode ser acessado pela rede interna do Compose.
 
@@ -112,7 +113,7 @@ infra/      infraestrutura, inicialização e observabilidade
 docs/       contexto, arquitetura e documentação de fases
 ```
 
-Os serviços de domínio, workers e a web continuam apenas como scaffolds. O BFF é o único componente de aplicação funcional nesta etapa.
+O BFF e o Identity Service são os componentes de aplicação funcionais nesta etapa. Os demais serviços, workers e a web continuam como scaffolds.
 
 ## Fase 1B — Templates Técnicos
 
@@ -155,7 +156,7 @@ Esta fase não publica eventos, não acessa infraestrutura e não adiciona compo
 
 ## Fase 3 — BFF Inicial
 
-O BFF FastAPI em `apps/bff` é a porta de entrada da futura web. Ele oferece health/readiness, status da plataforma, usuário de desenvolvimento, listas vazias de clientes/execuções e SSE de demonstração.
+O BFF FastAPI em `apps/bff` é a porta de entrada da futura web. Os placeholders de clientes, execuções e SSE permanecem; o placeholder de identidade foi substituído na Fase 4.
 
 ```bash
 docker compose up -d --build bff
@@ -163,7 +164,32 @@ make bff-health
 make bff-test
 ```
 
-Todas as respostas propagam `X-Correlation-Id`, os logs são JSON e o CORS permite `http://localhost:3000`. Os clients internos são placeholders: não há chamadas a serviços, banco, Redis, RabbitMQ, Temporal ou MinIO. Consulte `docs/fase-3-bff-inicial.md`.
+Todas as respostas propagam `X-Correlation-Id`, os logs são JSON e o CORS permite `http://localhost:3000`. Consulte `docs/fase-3-bff-inicial.md`.
+
+## Fase 4 — Identity Service
+
+O serviço FastAPI em `services/identity-service` implementa usuários persistentes, Argon2, login, JWT com expiração, `/auth/me`, RBAC e gestão administrativa. O schema `auth` é migrado com Alembic e o seed idempotente cria roles, permissões e o administrador configurado por ambiente.
+
+```bash
+copy .env.example .env
+# preencha JWT_ACCESS_SECRET, JWT_REFRESH_SECRET e SEED_ADMIN_*
+docker compose up -d --build identity-service bff
+make identity-test
+make bff-test
+```
+
+O frontend usa apenas as rotas `/api/v1/auth/*` e `/api/v1/users*` do BFF. Consulte `docs/fase-4-identity-service.md`.
+
+## Fase 4.1 — Identity Service Hardening
+
+O Identity agora mantém sessões persistentes, access/refresh tokens com
+segredos separados, logout e revogação, troca/reset de senha, bloqueio por
+falhas, rate limit persistente e auditoria interna append-only. Para a web, o
+BFF mantém o refresh token em cookie `HttpOnly`; o access token curto permanece
+somente em memória.
+
+Consulte `docs/fase-4.1-identity-hardening.md` para fluxos, variáveis e
+limitações.
 
 ## Comandos úteis
 
@@ -174,6 +200,9 @@ make redis-cli
 make rabbitmq-logs
 make minio-logs
 make temporal-logs
+make identity-logs
+make identity-health
+make identity-test
 make bff-logs
 make bff-health
 make bff-test
@@ -181,4 +210,4 @@ make bff-test
 
 ## Próximos passos
 
-As próximas fases podem implementar identidade e os demais serviços gradualmente, mantendo o BFF sem domínio próprio e preservando a separação entre Control Plane, Data Plane, workers, packages e infraestrutura.
+As próximas fases podem implementar os demais serviços gradualmente, mantendo o BFF sem domínio próprio e preservando a separação entre Control Plane, Data Plane, workers, packages e infraestrutura.

@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,6 +10,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     port: int = 8000
     cors_allowed_origins: str = "http://localhost:3000"
+    auth_refresh_cookie_name: str = "cci_refresh_token"
+    auth_refresh_cookie_secure: bool = False
+    auth_refresh_cookie_samesite: str = Field(
+        default="lax", pattern="^(lax|strict)$"
+    )
+    auth_refresh_cookie_max_age: int = Field(default=604800, gt=0)
 
     identity_service_url: str = "http://identity-service:8101"
     client_service_url: str = "http://client-service:8102"
@@ -37,6 +44,15 @@ class Settings(BaseSettings):
             for origin in self.cors_allowed_origins.split(",")
             if origin.strip()
         ]
+
+    @model_validator(mode="after")
+    def require_secure_cookie_in_production(self) -> "Settings":
+        if (
+            self.app_env.casefold() == "production"
+            and not self.auth_refresh_cookie_secure
+        ):
+            raise ValueError("refresh cookie must be Secure in production")
+        return self
 
 
 @lru_cache
