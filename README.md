@@ -105,7 +105,7 @@ Após concluir, o container de setup permanece encerrado com código `0`; esse �
 ## Estrutura do repositório
 
 ```text
-apps/       BFF inicial funcional e scaffold da futura web
+apps/       BFF e Web inicial funcionais
 services/   serviços de domínio futuros
 workers/    processamento pesado futuro
 packages/   contratos e bibliotecas compartilhadas futuras
@@ -113,7 +113,7 @@ infra/      infraestrutura, inicialização e observabilidade
 docs/       contexto, arquitetura e documentação de fases
 ```
 
-O BFF e o Identity Service são os componentes de aplicação funcionais nesta etapa. Os demais serviços, workers e a web continuam como scaffolds.
+O BFF, a Web, o Identity Service e o Client Service são componentes funcionais. Os demais serviços e workers continuam como scaffolds incrementais.
 
 ## Fase 1B — Templates Técnicos
 
@@ -190,6 +190,21 @@ somente em memória.
 
 Consulte `docs/fase-4.1-identity-hardening.md` para fluxos, variáveis e
 limitações.
+
+## Fase 5 — Web Inicial
+
+A aplicação Next.js em `apps/web` implementa login real, sessão em memória com
+refresh HttpOnly no BFF, rotas protegidas, RBAC visual, contexto operacional e
+um cockpit responsivo sem dados fictícios.
+
+```bash
+cd apps/web
+npm ci
+npm run dev
+```
+
+Consulte `docs/fase-5-web-inicial.md` para arquitetura frontend, contratos,
+componentes, testes e limitações.
 
 ## Fase 6 — Client Service
 
