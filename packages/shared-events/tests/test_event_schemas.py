@@ -22,6 +22,7 @@ EVENT_CASES = [
     ("execution-finished.schema.json", "execution-finished.example.json"),
     ("report-generated.schema.json", "report-generated.example.json"),
     ("log-created.schema.json", "log-created.example.json"),
+    ("template-version-published.schema.json", "template-version-published.example.json"),
 ]
 
 

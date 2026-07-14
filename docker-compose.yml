@@ -296,6 +296,46 @@ services:
     networks:
       - cci-network
 
+  template-service:
+    build:
+      context: ./services/template-service
+    container_name: cci-template-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: template-service
+      PORT: ${TEMPLATE_SERVICE_PORT:-8120}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cci}:${POSTGRES_PASSWORD:-cci_password}@postgres-app:5432/${POSTGRES_DB:-cci_platform}
+      IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8101}
+      IDENTITY_TIMEOUT_SECONDS: ${IDENTITY_TIMEOUT_SECONDS:-5}
+      DOCUMENT_SERVICE_URL: ${DOCUMENT_SERVICE_URL:-http://document-service:8110}
+      DOCUMENT_SERVICE_TIMEOUT_SECONDS: ${DOCUMENT_SERVICE_TIMEOUT_SECONDS:-5}
+      TEMPLATE_DATABASE_SCHEMA: ${TEMPLATE_DATABASE_SCHEMA:-template}
+      TEMPLATE_MAX_SELECTION_PAYLOAD_KB: ${TEMPLATE_MAX_SELECTION_PAYLOAD_KB:-256}
+      TEMPLATE_MAX_RULE_CONFIG_KB: ${TEMPLATE_MAX_RULE_CONFIG_KB:-128}
+    depends_on:
+      postgres-app:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+      document-service:
+        condition: service_healthy
+    ports:
+      - "${TEMPLATE_SERVICE_PORT:-8120}:8120"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8120/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
   parser-worker:
     build:
       context: ./workers/parser-worker
@@ -346,6 +386,7 @@ services:
       IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8101}
       CLIENT_SERVICE_URL: ${CLIENT_SERVICE_URL:-http://client-service:8102}
       DOCUMENT_SERVICE_URL: ${DOCUMENT_SERVICE_URL:-http://document-service:8110}
+      TEMPLATE_SERVICE_URL: ${TEMPLATE_SERVICE_URL:-http://template-service:8120}
       CONFERENCE_MODEL_SERVICE_URL: ${CONFERENCE_MODEL_SERVICE_URL:-http://conference-model-service:8103}
       SCHEDULE_SERVICE_URL: ${SCHEDULE_SERVICE_URL:-http://schedule-service:8104}
       DOCUMENT_INGESTION_SERVICE_URL: ${DOCUMENT_INGESTION_SERVICE_URL:-http://document-ingestion-service:8110}
@@ -366,6 +407,8 @@ services:
       client-service:
         condition: service_healthy
       document-service:
+        condition: service_healthy
+      template-service:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -454,6 +497,43 @@ services:
       PARSER_PREVIEW_MAX_JSON_SIZE_MB: 5
     depends_on:
       postgres-document-test:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && pytest -q"
+    networks:
+      - cci-network
+
+  postgres-template-test:
+    image: postgres:16
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: cci_template_test
+      POSTGRES_USER: cci_test
+      POSTGRES_PASSWORD: cci_test_password
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cci_test -d cci_template_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    networks:
+      - cci-network
+
+  template-service-test:
+    build:
+      context: ./services/template-service
+    profiles: ["test"]
+    environment:
+      APP_ENV: test
+      SERVICE_NAME: template-service
+      DATABASE_URL: postgresql+psycopg://cci_test:cci_test_password@postgres-template-test:5432/cci_template_test
+      IDENTITY_SERVICE_URL: http://identity-service:8101
+      DOCUMENT_SERVICE_URL: http://document-service:8110
+      TEMPLATE_DATABASE_SCHEMA: template
+      TEMPLATE_MAX_SELECTION_PAYLOAD_KB: 64
+      TEMPLATE_MAX_RULE_CONFIG_KB: 64
+    depends_on:
+      postgres-template-test:
         condition: service_healthy
     command: sh -c "alembic upgrade head && pytest -q"
     networks:

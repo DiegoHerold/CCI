@@ -3,15 +3,20 @@
   "$id": "https://cci.local/schemas/fields/field.schema.json",
   "title": "CCI Field Definition",
   "type": "object",
-  "required": ["field_id", "path", "label", "field_type", "required"],
+  "required": ["id", "template_id", "field_path", "label", "field_type", "is_required", "is_repeated", "is_object", "is_array", "order_index"],
   "properties": {
-    "field_id": {"type": "string"},
-    "path": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\[\\])?(\\.[A-Za-z_][A-Za-z0-9_]*(\\[\\])?)*$"},
+    "id": {"type": "string"},
+    "template_id": {"type": "string"},
+    "parent_field_id": {"type": ["string", "null"]},
+    "field_path": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\[\\])?(\\.[A-Za-z_][A-Za-z0-9_]*(\\[\\])?)*$"},
     "label": {"type": "string", "minLength": 1},
-    "field_type": {"type": "string", "enum": ["string", "integer", "decimal", "money", "boolean", "date", "datetime", "object", "array", "table", "calculated"]},
-    "required": {"type": "boolean"},
-    "children": {"type": "array", "items": {"$ref": "#"}},
-    "formula": {"type": ["string", "null"]}
+    "description": {"type": ["string", "null"]},
+    "field_type": {"type": "string", "enum": ["text", "number", "money", "date", "month", "cnpj", "cpf", "boolean", "object", "array", "table", "calculated", "unknown"]},
+    "is_required": {"type": "boolean"},
+    "is_repeated": {"type": "boolean"},
+    "is_object": {"type": "boolean"},
+    "is_array": {"type": "boolean"},
+    "order_index": {"type": "integer", "minimum": 0}
   },
   "additionalProperties": false
 }

@@ -1,0 +1,16 @@
+{
+  "event_id": "evt_template_version_published_123",
+  "event_type": "TemplateVersionPublished",
+  "version": 1,
+  "occurred_at": "2026-07-14T10:00:00Z",
+  "correlation_id": "corr_template_123",
+  "producer": "template-service",
+  "payload": {
+    "template_id": "tpl_123",
+    "version_id": "tplv_1",
+    "version_number": 1,
+    "category_id": "cat_balancete",
+    "file_format": "PDF",
+    "structure_type": "hierarchical"
+  }
+}

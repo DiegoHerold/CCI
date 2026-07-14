@@ -1,24 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://cci.local/schemas/annotations/annotation.schema.json",
-  "title": "CCI Annotation",
+  "title": "CCI Template Annotation",
   "type": "object",
-  "required": ["annotation_id", "template_id", "template_version", "document_id", "target_field", "selection"],
+  "required": ["id", "template_id", "document_id", "field_id", "annotation_type", "selection_payload"],
   "properties": {
-    "annotation_id": {"type": "string"},
+    "id": {"type": "string"},
     "template_id": {"type": "string"},
-    "template_version": {"type": "integer", "minimum": 1},
+    "template_version_id": {"type": ["string", "null"]},
     "document_id": {"type": "string"},
-    "target_field": {"type": "string", "minLength": 1},
-    "selection": {"oneOf": [
-      {"$ref": "#/$defs/PdfSelection"},
-      {"$ref": "#/$defs/ExcelSelection"}
-    ]}
-  },
-  "$defs": {
-    "BoundingBox": {"type": "object", "required": ["x", "y", "width", "height"], "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number", "minimum": 0}, "height": {"type": "number", "minimum": 0}}, "additionalProperties": false},
-    "PdfSelection": {"type": "object", "required": ["kind", "page", "bbox"], "properties": {"kind": {"enum": ["pdf_text", "pdf_area"]}, "page": {"type": "integer", "minimum": 1}, "selected_text": {"type": ["string", "null"]}, "bbox": {"$ref": "#/$defs/BoundingBox"}}, "additionalProperties": false},
-    "ExcelSelection": {"type": "object", "required": ["kind", "sheet", "range"], "properties": {"kind": {"enum": ["excel_cell", "excel_column", "excel_table"]}, "sheet": {"type": "string"}, "range": {"type": "string"}, "header": {"type": ["string", "null"]}}, "additionalProperties": false}
+    "field_id": {"type": "string"},
+    "annotation_type": {"type": "string", "enum": ["pdf_text_block", "pdf_line", "pdf_token", "pdf_area", "pdf_table_candidate", "excel_cell", "excel_column", "excel_row", "excel_range", "excel_table_candidate"]},
+    "source_preview_id": {"type": ["string", "null"]},
+    "selected_text": {"type": ["string", "null"]},
+    "selection_payload": {"type": "object"}
   },
   "additionalProperties": false
 }

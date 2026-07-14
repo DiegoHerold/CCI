@@ -1,19 +1,61 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://cci.local/schemas/templates/template.schema.json",
-  "title": "CCI Template Version",
+  "title": "CCI Template",
   "type": "object",
-  "required": ["template_id", "name", "category", "format", "structure_type", "version", "status", "identification_signals", "field_paths"],
+  "required": ["template_id", "name", "category_id", "file_format", "structure_type", "status"],
   "properties": {
     "template_id": {"type": "string", "minLength": 1},
     "name": {"type": "string", "minLength": 1},
-    "category": {"type": "string", "minLength": 1},
-    "format": {"type": "string", "enum": ["pdf", "xlsx", "xls", "csv", "image", "other"]},
-    "structure_type": {"type": "string", "enum": ["flat", "hierarchical", "tabular", "mixed"]},
-    "version": {"type": "integer", "minimum": 1},
-    "status": {"type": "string", "enum": ["draft", "published", "archived"]},
-    "identification_signals": {"type": "array", "items": {"type": "object", "required": ["kind", "value"], "properties": {"kind": {"type": "string", "enum": ["filename", "text", "sheet", "header", "layout"]}, "value": {"type": "string"}, "weight": {"type": "number", "minimum": 0, "maximum": 1}}, "additionalProperties": false}},
-    "field_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+    "description": {"type": ["string", "null"]},
+    "category_id": {"type": "string", "minLength": 1},
+    "file_format": {"type": "string", "enum": ["PDF", "XLSX", "XLS", "CSV", "TXT", "DOCX", "XML", "IMAGE"]},
+    "structure_type": {"type": "string", "enum": ["text", "table", "hierarchical", "form", "mixed", "unknown"]},
+    "status": {"type": "string", "enum": ["draft", "active", "inactive", "archived"]},
+    "active_version_id": {"type": ["string", "null"]},
+    "category": {"$ref": "#/$defs/TemplateCategory"},
+    "identification_signals": {"type": "array", "items": {"$ref": "#/$defs/IdentificationSignal"}},
+    "versions": {"type": "array", "items": {"$ref": "#/$defs/TemplateVersion"}}
+  },
+  "$defs": {
+    "TemplateCategory": {
+      "type": "object",
+      "required": ["id", "name", "slug", "status"],
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "slug": {"type": "string"},
+        "description": {"type": ["string", "null"]},
+        "status": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "IdentificationSignal": {
+      "type": "object",
+      "required": ["signal_type", "weight", "value", "required", "negative"],
+      "properties": {
+        "id": {"type": ["string", "null"]},
+        "template_id": {"type": ["string", "null"]},
+        "signal_type": {"type": "string", "enum": ["contains_text", "contains_any_text", "contains_all_text", "not_contains_text", "regex", "file_format", "sheet_name", "column_header", "table_header", "page_count_range", "has_cnpj", "has_date", "has_currency_values", "structure_hint"]},
+        "weight": {"type": "number", "minimum": 0, "maximum": 100},
+        "value": {"type": "string"},
+        "required": {"type": "boolean"},
+        "negative": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "TemplateVersion": {
+      "type": "object",
+      "required": ["id", "template_id", "version_number", "status", "snapshot"],
+      "properties": {
+        "id": {"type": "string"},
+        "template_id": {"type": "string"},
+        "version_number": {"type": "integer", "minimum": 1},
+        "status": {"type": "string", "enum": ["draft", "published", "archived"]},
+        "snapshot": {"type": "object"}
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": false
 }

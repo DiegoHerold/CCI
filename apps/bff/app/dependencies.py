@@ -13,6 +13,7 @@ from app.infrastructure.clients.report_service_client import ReportServiceClient
 from app.infrastructure.clients.result_service_client import ResultServiceClient
 from app.infrastructure.clients.rule_service_client import RuleServiceClient
 from app.infrastructure.clients.schedule_service_client import ScheduleServiceClient
+from app.infrastructure.clients.template_service_client import TemplateServiceClient
 from app.infrastructure.clients.variable_registry_client import VariableRegistryClient
 
 
@@ -32,12 +33,17 @@ def get_document_service_client() -> DocumentServiceClient:
     return DocumentServiceClient(get_settings().document_service_url)
 
 
+def get_template_service_client() -> TemplateServiceClient:
+    return TemplateServiceClient(get_settings().template_service_url)
+
+
 def get_internal_clients() -> dict[str, BaseInternalClient]:
     settings = get_settings()
     clients: list[BaseInternalClient] = [
         IdentityClient(settings.identity_service_url),
         ClientServiceClient(settings.client_service_url),
         DocumentServiceClient(settings.document_service_url),
+        TemplateServiceClient(settings.template_service_url),
         ConferenceModelClient(settings.conference_model_service_url),
         ScheduleServiceClient(settings.schedule_service_url),
         DocumentIngestionClient(settings.document_ingestion_service_url),

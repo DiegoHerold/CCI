@@ -1,4 +1,37 @@
-export interface BoundingBox { x: number; y: number; width: number; height: number }
-export type PdfSelection = { kind: "pdf_text" | "pdf_area"; page: number; selected_text?: string | null; bbox: BoundingBox };
-export type ExcelSelection = { kind: "excel_cell" | "excel_column" | "excel_table"; sheet: string; range: string; header?: string | null };
-export interface Annotation { annotation_id: string; template_id: string; template_version: number; document_id: string; target_field: string; selection: PdfSelection | ExcelSelection }
+export type AnnotationType =
+  | "pdf_text_block"
+  | "pdf_line"
+  | "pdf_token"
+  | "pdf_area"
+  | "pdf_table_candidate"
+  | "excel_cell"
+  | "excel_column"
+  | "excel_row"
+  | "excel_range"
+  | "excel_table_candidate";
+
+export interface BoundingBox {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+export interface AnnotationTargetField {
+  field_id: string;
+  field_path: string;
+}
+
+export interface TemplateAnnotation {
+  id: string;
+  template_id: string;
+  template_version_id?: string | null;
+  document_id: string;
+  field_id: string;
+  annotation_type: AnnotationType;
+  source_preview_id?: string | null;
+  selected_text?: string | null;
+  selection_payload: Record<string, unknown>;
+}
+
+export type Annotation = TemplateAnnotation;

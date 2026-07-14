@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/template-version-published.schema.json",
+  "title": "TemplateVersionPublished",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "TemplateVersionPublished" },
+        "payload": {
+          "type": "object",
+          "required": ["template_id", "version_id", "version_number", "category_id", "file_format", "structure_type"],
+          "properties": {
+            "template_id": { "type": "string" },
+            "version_id": { "type": "string" },
+            "version_number": { "type": "integer", "minimum": 1 },
+            "category_id": { "type": "string" },
+            "file_format": { "type": "string" },
+            "structure_type": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-.PHONY: up down restart logs ps build migrate seed test lint format reset clean infra-up infra-down infra-check create-buckets create-schemas packages-test postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health document-logs document-shell document-migrate document-test document-health parser-logs parser-shell parser-test parser-health bff-logs bff-shell bff-test bff-health
+.PHONY: up down restart logs ps build migrate seed test lint format reset clean infra-up infra-down infra-check create-buckets create-schemas packages-test postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health document-logs document-shell document-migrate document-test document-health template-logs template-shell template-migrate template-test template-health parser-logs parser-shell parser-test parser-health bff-logs bff-shell bff-test bff-health
 
 up:
 	docker compose up -d
@@ -19,14 +19,14 @@ ps:
 build:
 	docker compose build
 
-migrate: identity-migrate client-migrate document-migrate
+migrate: identity-migrate client-migrate document-migrate template-migrate
 
 seed: identity-seed
 
 packages-test:
 	pytest packages
 
-test: packages-test identity-test client-test document-test parser-test bff-test
+test: packages-test identity-test client-test document-test template-test parser-test bff-test
 
 lint:
 	docker compose config > /dev/null
@@ -121,6 +121,22 @@ document-test:
 document-health:
 	curl -fsS http://localhost:8110/health
 	curl -fsS http://localhost:8110/ready
+
+template-logs:
+	docker compose logs -f template-service
+
+template-shell:
+	docker compose exec template-service sh
+
+template-migrate:
+	docker compose run --rm template-service alembic upgrade head
+
+template-test:
+	docker compose --profile test run --rm template-service-test
+
+template-health:
+	curl -fsS http://localhost:8120/health
+	curl -fsS http://localhost:8120/ready
 
 parser-logs:
 	docker compose logs -f parser-worker
