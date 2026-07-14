@@ -12,6 +12,8 @@ class FieldType(str, Enum):
     CNPJ = "cnpj"
     CPF = "cpf"
     BOOLEAN = "boolean"
+    PERCENTAGE = "percentage"
+    ACCOUNT_CODE = "account_code"
     OBJECT = "object"
     ARRAY = "array"
     TABLE = "table"

@@ -30,6 +30,7 @@ class DocumentStatus(str, Enum):
     EXTRACTION_PENDING = "extraction_pending"
     EXTRACTION_RUNNING = "extraction_running"
     EXTRACTED = "extracted"
+    REVIEW_PENDING = "review_pending"
     EXTRACTION_FAILED = "extraction_failed"
     ERROR = "error"
 

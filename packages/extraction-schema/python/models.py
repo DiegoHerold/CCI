@@ -33,6 +33,32 @@ class ExtractionWorkerStatus(str, Enum):
     UNSUPPORTED = "unsupported"
 
 
+class ExtractionResultStatus(str, Enum):
+    COMPLETED = "completed"
+    COMPLETED_WITH_WARNINGS = "completed_with_warnings"
+    REQUIRES_REVIEW = "requires_review"
+    FAILED = "failed"
+
+
+class ExtractedFieldStatus(str, Enum):
+    NORMALIZED = "normalized"
+    NOT_FOUND = "not_found"
+    NORMALIZATION_FAILED = "normalization_failed"
+    LOW_CONFIDENCE = "low_confidence"
+    AMBIGUOUS = "ambiguous"
+    EVIDENCE_MISSING = "evidence_missing"
+    REQUIRES_REVIEW = "requires_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    CORRECTED = "corrected"
+
+
+class NormalizationStatus(str, Enum):
+    STARTED = "started"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class ExtractionRequest(BaseModel):
     force_reprocess: bool = False
     matching_run_id: str | None = None
@@ -171,13 +197,32 @@ class ExtractionRetryPolicy(BaseModel):
     max_interval_seconds: int = Field(ge=1)
 
 
+class NormalizedValue(BaseModel):
+    raw_value: Any = None
+    normalized_value: Any = None
+    display_value: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    success: bool = True
+    error_code: str | None = None
+
+
+class NormalizationMetadata(BaseModel):
+    locale: str = "pt-BR"
+    normalizer_version: str = "1.0.0"
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class ExtractedFieldValue(BaseModel):
+    field_value_id: str | None = None
     path: str
     raw_value: Any
     normalized_value: Any
+    display_value: str | None = None
     value_type: str
     confidence: float = Field(ge=0, le=1)
-    evidence_ids: list[str] = Field(min_length=1)
+    status: ExtractedFieldStatus = ExtractedFieldStatus.NORMALIZED
+    evidence_ids: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ExtractedObject(BaseModel):
@@ -185,14 +230,50 @@ class ExtractedObject(BaseModel):
     fields: list[ExtractedFieldValue] = Field(default_factory=list)
 
 
+class ExtractedArrayItem(BaseModel):
+    array_item_id: str | None = None
+    array_field_path: str
+    item_index: int = Field(ge=0)
+    status: ExtractedFieldStatus | str
+    confidence: float = Field(ge=0, le=1)
+
+
 class ExtractionResult(BaseModel):
+    extraction_result_id: str | None = None
     job_id: str
     document_id: str
     client_id: str
     competence_id: str
     template_id: str
-    template_version: int = Field(ge=1)
-    status: str
+    template_version_id: str | None = None
+    template_version: int | None = Field(default=None, ge=1)
+    status: ExtractionResultStatus | str
+    field_count: int = Field(default=0, ge=0)
+    normalized_count: int = Field(default=0, ge=0)
+    requires_review_count: int = Field(default=0, ge=0)
     review_status: str = "not_required"
     objects: list[ExtractedObject] = Field(default_factory=list)
     error_code: str | None = None
+
+
+class NormalizationRun(BaseModel):
+    normalization_run_id: str | None = None
+    extraction_job_id: str
+    extraction_result_id: str | None = None
+    status: NormalizationStatus
+    error_message: str | None = None
+
+
+class ExtractionResultSummary(BaseModel):
+    extraction_result_id: str
+    extraction_job_id: str
+    document_id: str
+    status: ExtractionResultStatus | str
+    field_count: int = Field(ge=0)
+    normalized_count: int = Field(ge=0)
+    requires_review_count: int = Field(ge=0)
+
+
+class ExtractionResultDetail(ExtractionResult):
+    fields: list[ExtractedFieldValue] = Field(default_factory=list)
+    array_items: list[ExtractedArrayItem] = Field(default_factory=list)

@@ -118,3 +118,73 @@ async def cancel_extraction_job(
     authorization: Annotated[str | None, Header()] = None,
 ) -> JSONResponse:
     return await _proxy(request, f"/extractions/jobs/{job_id}/cancel", extraction_service, authorization)
+
+
+@router.get("/documents/{document_id}/extraction-result")
+async def get_document_extraction_result(
+    document_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/documents/{document_id}/result/latest", extraction_service, authorization)
+
+
+@router.get("/extractions/jobs/{job_id}/result")
+async def get_extraction_job_result(
+    job_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/jobs/{job_id}/result", extraction_service, authorization)
+
+
+@router.get("/extractions/results/{result_id}/fields")
+async def list_extraction_result_fields(
+    result_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/results/{result_id}/fields", extraction_service, authorization)
+
+
+@router.get("/extractions/results/{result_id}/objects")
+async def list_extraction_result_objects(
+    result_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/results/{result_id}/objects", extraction_service, authorization)
+
+
+@router.get("/extractions/results/{result_id}/array-items")
+async def list_extraction_result_array_items(
+    result_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/results/{result_id}/array-items", extraction_service, authorization)
+
+
+@router.get("/extractions/fields/{field_value_id}/evidence")
+async def list_extraction_field_evidence(
+    field_value_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/fields/{field_value_id}/evidence", extraction_service, authorization)
+
+
+@router.post("/extractions/jobs/{job_id}/normalize/reprocess")
+async def reprocess_extraction_normalization(
+    job_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/jobs/{job_id}/normalize/reprocess", extraction_service, authorization)

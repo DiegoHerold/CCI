@@ -19,6 +19,7 @@
 - `fase-12-template-builder-annotation.md`: builder visual de templates e annotations com regra tecnica sugerida.
 - `fase-13-extraction-service.md`: jobs de extracao, Temporal preparado, status, retries, dispatch de workers e artefatos brutos.
 - `fase-14-extractor-workers-basicos.md`: workers PDF/Excel para extracao bruta por template, estrategias tecnicas e evidencias.
+- `fase-15-normalizacao-resultados-extracao.md`: normalizacao, resultados persistidos, evidencias, status e APIs de consulta.
 - `preparacao-infra-packages.md`: preparacao aditiva de infra, contracts, Compose, ambiente e operacao.
 - `recriar-infra-docker-local.md`: roteiro para reconstruir Docker local, schemas, buckets e servicos existentes.
 

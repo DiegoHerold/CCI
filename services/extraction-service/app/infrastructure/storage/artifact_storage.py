@@ -26,24 +26,18 @@ class ArtifactStorage:
             raise StorageUnavailableError() from exc
         return bucket, content_hash
 
-    def _upload_bytes(self, bucket: str, key: str, content: bytes) -> None:
+    def load_json(self, *, bucket: str, key: str, max_size_bytes: int = 50 * 1024 * 1024) -> dict[str, Any]:
         try:
-            import boto3
-            from botocore.client import Config
-        except ImportError as exc:
-            raise StorageUnavailableError("boto3 is not installed") from exc
-        scheme = "https" if self.settings.minio_secure else "http"
-        endpoint = self.settings.minio_endpoint
-        if not endpoint.startswith(("http://", "https://")):
-            endpoint = f"{scheme}://{endpoint}"
-        client = boto3.client(
-            "s3",
-            endpoint_url=endpoint,
-            aws_access_key_id=self.settings.minio_access_key,
-            aws_secret_access_key=self.settings.minio_secret_key,
-            config=Config(signature_version="s3v4"),
-            region_name="us-east-1",
-        )
+            response = self._client().get_object(Bucket=bucket, Key=key)
+            content = response["Body"].read(max_size_bytes + 1)
+        except Exception as exc:
+            raise StorageUnavailableError() from exc
+        if len(content) > max_size_bytes:
+            raise StorageUnavailableError("artifact exceeds size limit")
+        return json.loads(content.decode("utf-8"))
+
+    def _upload_bytes(self, bucket: str, key: str, content: bytes) -> None:
+        client = self._client()
         buckets = client.list_buckets().get("Buckets", [])
         if not any(item.get("Name") == bucket for item in buckets):
             client.create_bucket(Bucket=bucket)
@@ -53,4 +47,23 @@ class ArtifactStorage:
             Body=content,
             ContentType="application/json",
             Metadata={"sha256": hashlib.sha256(content).hexdigest()},
+        )
+
+    def _client(self):
+        try:
+            import boto3
+            from botocore.client import Config
+        except ImportError as exc:
+            raise StorageUnavailableError("boto3 is not installed") from exc
+        scheme = "https" if self.settings.minio_secure else "http"
+        endpoint = self.settings.minio_endpoint
+        if not endpoint.startswith(("http://", "https://")):
+            endpoint = f"{scheme}://{endpoint}"
+        return boto3.client(
+            "s3",
+            endpoint_url=endpoint,
+            aws_access_key_id=self.settings.minio_access_key,
+            aws_secret_access_key=self.settings.minio_secret_key,
+            config=Config(signature_version="s3v4"),
+            region_name="us-east-1",
         )

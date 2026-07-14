@@ -99,10 +99,14 @@ class FakeEventPublisher(EventPublisher):
 
 
 class FakeDispatcher(WorkerDispatcher):
+    next_raw_output: dict[str, Any] | None = None
+    next_status: str = "completed"
+
     async def dispatch(self, payload: dict[str, Any], selection) -> WorkerDispatchResult:
         return WorkerDispatchResult(
-            status="completed",
-            raw_output={"worker": selection.worker_name, "payload": {"document_id": payload["document"]["document_id"]}},
+            status=self.next_status,
+            raw_output=self.next_raw_output
+            or {"worker": selection.worker_name, "payload": {"document_id": payload["document"]["document_id"]}},
         )
 
 
@@ -113,7 +117,12 @@ class FakeArtifactStorage:
         return f"clients/{client_id}/competences/{competence_id}/documents/{document_id}/extractions/{job_id}/artifact.json"
 
     def save_json(self, key: str, payload: dict[str, Any]) -> tuple[str, str]:
+        self.last_key = key
+        self.last_payload = payload
         return self.bucket, "fake-sha256"
+
+    def load_json(self, *, bucket: str, key: str, max_size_bytes: int = 50 * 1024 * 1024) -> dict[str, Any]:
+        return getattr(self, "last_payload", {})
 
 
 OPEN_SESSIONS = []
@@ -127,7 +136,10 @@ def reset_database() -> Generator[None, None, None]:
     with SessionLocal() as session:
         session.execute(
             text(
-                "TRUNCATE extraction.extraction_artifacts, extraction.extraction_attempts, "
+                "TRUNCATE extraction.normalization_runs, extraction.extraction_evidences, "
+                "extraction.extracted_field_values, extraction.extracted_array_items, "
+                "extraction.extracted_objects, extraction.extraction_results, "
+                "extraction.extraction_artifacts, extraction.extraction_attempts, "
                 "extraction.extraction_job_status_history, extraction.extraction_jobs CASCADE"
             )
         )

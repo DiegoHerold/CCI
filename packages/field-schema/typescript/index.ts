@@ -7,6 +7,8 @@ export type FieldType =
   | "cnpj"
   | "cpf"
   | "boolean"
+  | "percentage"
+  | "account_code"
   | "object"
   | "array"
   | "table"

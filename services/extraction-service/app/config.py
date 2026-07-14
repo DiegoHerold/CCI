@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     excel_extractor_worker_url: str = "http://excel-extractor-worker:8132"
     extractor_worker_timeout_seconds: float = Field(default=60.0, gt=0, le=300)
 
+    normalization_low_confidence_threshold: float = Field(default=0.75, ge=0, le=1)
+    normalization_default_locale: str = "pt-BR"
+    normalization_date_formats: str = "DD/MM/YYYY,YYYY-MM-DD,DD-MM-YYYY"
+    normalization_month_formats: str = "MM/YYYY,YYYY-MM,MMMM/YYYY,MMM/YYYY"
+    normalization_max_fields_per_result: int = Field(default=50000, ge=1)
+    normalization_max_array_items: int = Field(default=20000, ge=1)
+    normalization_preserve_raw_value: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

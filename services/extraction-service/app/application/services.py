@@ -8,6 +8,7 @@ from app.domain.enums import (
     ExtractionArtifactType,
     ExtractionAttemptStatus,
     ExtractionJobStatus,
+    ExtractionResultStatus,
     TERMINAL_STATUSES,
 )
 from app.errors import BusinessRuleError, ConflictError, NotFoundError, ServiceError
@@ -20,6 +21,7 @@ from app.infrastructure.messaging.events import DomainEvent, EventPublisher
 from app.infrastructure.storage.artifact_storage import ArtifactStorage
 from app.infrastructure.temporal.client import TemporalClient
 from app.infrastructure.worker_dispatch import WorkerDispatcher
+from app.modules.results.service import ExtractionResultService
 
 
 class ExtractionService:
@@ -43,6 +45,7 @@ class ExtractionService:
         self.storage = storage
         self.publisher = publisher
         self.jobs = ExtractionJobRepository(session)
+        self.results = ExtractionResultService(session, settings)
 
     async def request_extraction_for_document(
         self,
@@ -231,15 +234,143 @@ class ExtractionService:
                 storage_key=key,
                 content_hash=content_hash,
             )
+            self._publish("ExtractionNormalizationStarted", job, correlation_id)
+            try:
+                normalization = self.results.process_worker_output(
+                    job=job,
+                    raw_output=result.raw_output,
+                    fields=worker_payload.get("template", {}).get("fields", []),
+                )
+            except ValueError as exc:
+                self._publish_normalization_failed(job, correlation_id, str(exc))
+                raise BusinessRuleError("EXTRACTION_NORMALIZATION_FAILED", str(exc)) from exc
+            self._publish(
+                "ExtractionResultsSaved",
+                job,
+                correlation_id,
+                extra={
+                    "extraction_result_id": normalization.result.id,
+                    "status": normalization.result.status,
+                    "field_count": normalization.result.field_count,
+                    "requires_review_count": normalization.result.requires_review_count,
+                },
+            )
+            self._publish(
+                "ExtractionNormalizationCompleted",
+                job,
+                correlation_id,
+                extra={"extraction_result_id": normalization.result.id, "status": normalization.result.status},
+            )
             self.jobs.finish_attempt(attempt, status=ExtractionAttemptStatus.COMPLETED)
-            self.jobs.transition(job, ExtractionJobStatus.COMPLETED, reason="worker_completed", changed_by="workflow")
+            final_status = (
+                ExtractionJobStatus.REQUIRES_REVIEW
+                if normalization.status == ExtractionResultStatus.REQUIRES_REVIEW
+                else ExtractionJobStatus.COMPLETED
+            )
+            self.jobs.transition(job, final_status, reason="normalization_completed", changed_by="workflow")
             self.session.commit()
-            await self._safe_document_status(job.document_id, "extracted", actor, correlation_id, "Extraction completed")
-            self._publish("ExtractionCompleted", job, correlation_id, extra={"artifact_id": artifact.id})
+            if final_status == ExtractionJobStatus.REQUIRES_REVIEW:
+                await self._safe_document_status(job.document_id, "review_pending", actor, correlation_id, "Extraction requires review")
+                self._publish(
+                    "ExtractionRequiresReview",
+                    job,
+                    correlation_id,
+                    extra={
+                        "extraction_result_id": normalization.result.id,
+                        "reason": "low_confidence_or_missing_required_fields",
+                    },
+                )
+            else:
+                await self._safe_document_status(job.document_id, "extracted", actor, correlation_id, "Extraction completed")
+            self._publish(
+                "ExtractionCompleted",
+                job,
+                correlation_id,
+                extra={"artifact_id": artifact.id, "extraction_result_id": normalization.result.id},
+            )
         except ServiceError as exc:
             self._mark_failed(job, actor.id, correlation_id, exc.code, exc.message)
             await self._safe_document_status(job.document_id, "extraction_failed", actor, correlation_id, exc.message)
         return self.jobs.get(job_id)
+
+    def get_result_for_job(self, job_id: str):
+        return self.results.repository.get_by_job(job_id)
+
+    def latest_result_for_document(self, document_id: str):
+        return self.results.repository.latest_by_document(document_id)
+
+    def list_result_fields(
+        self,
+        result_id: str,
+        *,
+        field_path: str | None = None,
+        status: str | None = None,
+        field_type: str | None = None,
+        requires_review: bool | None = None,
+        min_confidence: float | None = None,
+    ):
+        self.results.repository.get_result(result_id)
+        return self.results.repository.list_fields(
+            result_id,
+            field_path=field_path,
+            status=status,
+            field_type=field_type,
+            requires_review=requires_review,
+            min_confidence=min_confidence,
+        )
+
+    def get_result_field(self, result_id: str, field_value_id: str):
+        return self.results.repository.get_field(result_id, field_value_id)
+
+    def list_result_objects(self, result_id: str):
+        self.results.repository.get_result(result_id)
+        return self.results.repository.list_objects(result_id)
+
+    def list_array_items(self, result_id: str, field_path: str):
+        self.results.repository.get_result(result_id)
+        return self.results.repository.list_array_items(result_id, field_path)
+
+    def list_field_evidence(self, field_value_id: str):
+        self.results.repository.get_field_any_result(field_value_id)
+        return self.results.repository.list_evidence_for_field(field_value_id)
+
+    async def reprocess_normalization(self, job_id: str, actor: Principal, correlation_id: str, reason: str | None = None):
+        actor.require_permission("documents:read")
+        job = self.jobs.get(job_id)
+        raw_artifact = next((item for item in reversed(job.artifacts) if item.artifact_type == ExtractionArtifactType.WORKER_RAW_OUTPUT.value), None)
+        if raw_artifact is None:
+            raise BusinessRuleError("EXTRACTION_RAW_ARTIFACT_NOT_FOUND", "Extraction job has no raw worker artifact")
+        raw_output = self.storage.load_json(bucket=raw_artifact.storage_bucket, key=raw_artifact.storage_key)
+        fields = await self.template_service.get_fields(
+            job.template_id,
+            authorization=actor.authorization,
+            correlation_id=correlation_id,
+        )
+        self._publish("ExtractionNormalizationStarted", job, correlation_id, extra={"reason": reason})
+        try:
+            normalization = self.results.process_worker_output(job=job, raw_output=raw_output, fields=fields)
+        except ValueError as exc:
+            self._publish_normalization_failed(job, correlation_id, str(exc), extra={"reason": reason})
+            raise BusinessRuleError("EXTRACTION_NORMALIZATION_FAILED", str(exc)) from exc
+        self.session.commit()
+        self._publish(
+            "ExtractionResultsSaved",
+            job,
+            correlation_id,
+            extra={
+                "extraction_result_id": normalization.result.id,
+                "status": normalization.result.status,
+                "field_count": normalization.result.field_count,
+                "requires_review_count": normalization.result.requires_review_count,
+            },
+        )
+        self._publish(
+            "ExtractionNormalizationCompleted",
+            job,
+            correlation_id,
+            extra={"extraction_result_id": normalization.result.id, "status": normalization.result.status},
+        )
+        return normalization.result
 
     def _mark_failed(self, job: ExtractionJob, actor_id: str, correlation_id: str, code: str, message: str) -> None:
         for attempt in job.attempts:
@@ -260,6 +391,18 @@ class ExtractionService:
         )
         self.session.commit()
         self._publish("ExtractionFailed", job, correlation_id, extra={"error_code": code, "error_message": message})
+
+    def _publish_normalization_failed(
+        self,
+        job: ExtractionJob,
+        correlation_id: str,
+        message: str,
+        extra: dict[str, Any] | None = None,
+    ) -> None:
+        payload = {"error_code": "EXTRACTION_NORMALIZATION_FAILED", "error_message": message}
+        if extra:
+            payload.update(extra)
+        self._publish("ExtractionNormalizationFailed", job, correlation_id, extra=payload)
 
     async def _resolve_matching(
         self,

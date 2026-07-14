@@ -113,6 +113,7 @@ class TemplateField(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     field_type: Mapped[str] = mapped_column(String(32), nullable=False)
     is_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    important: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_repeated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_object: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_array: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

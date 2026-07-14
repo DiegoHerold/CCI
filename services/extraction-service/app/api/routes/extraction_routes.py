@@ -4,12 +4,21 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.application.schemas import (
+    ExtractedArrayItemListResponse,
+    ExtractedFieldListResponse,
+    ExtractedFieldValueResponse,
+    ExtractedObjectListResponse,
+    ExtractedObjectResponse,
+    ExtractionEvidenceListResponse,
+    ExtractionEvidenceResponse,
     ExtractionJobListResponse,
     ExtractionJobResponse,
+    ExtractionResultSummaryResponse,
     ExtractionReprocessRequest,
     ExtractionRequest,
     ExtractionResponse,
     ExtractionStatusResponse,
+    NormalizationReprocessRequest,
 )
 from app.application.services import ExtractionService
 from app.config import Settings, get_settings
@@ -135,3 +144,89 @@ async def cancel_extraction_job(
 ) -> ExtractionResponse:
     job = await service.cancel_job(job_id, actor, getattr(request.state, "correlation_id", "system"))
     return ExtractionResponse.from_entity(job)
+
+
+@router.get("/jobs/{job_id}/result", response_model=ExtractionResultSummaryResponse)
+def get_extraction_result_for_job(job_id: str, service: ExtractionServiceDep) -> ExtractionResultSummaryResponse:
+    return ExtractionResultSummaryResponse.from_entity(service.get_result_for_job(job_id))
+
+
+@router.get("/documents/{document_id}/result/latest", response_model=ExtractionResultSummaryResponse)
+def get_latest_extraction_result_for_document(document_id: str, service: ExtractionServiceDep) -> ExtractionResultSummaryResponse:
+    return ExtractionResultSummaryResponse.from_entity(service.latest_result_for_document(document_id))
+
+
+@router.get("/results/{result_id}/fields", response_model=ExtractedFieldListResponse)
+def list_extracted_fields(
+    result_id: str,
+    service: ExtractionServiceDep,
+    field_path: str | None = None,
+    status: str | None = None,
+    field_type: str | None = None,
+    requires_review: bool | None = None,
+    min_confidence: float | None = None,
+) -> ExtractedFieldListResponse:
+    return ExtractedFieldListResponse(
+        items=[
+            ExtractedFieldValueResponse.from_entity(item)
+            for item in service.list_result_fields(
+                result_id,
+                field_path=field_path,
+                status=status,
+                field_type=field_type,
+                requires_review=requires_review,
+                min_confidence=min_confidence,
+            )
+        ]
+    )
+
+
+@router.get("/results/{result_id}/fields/{field_value_id}", response_model=ExtractedFieldValueResponse)
+def get_extracted_field(
+    result_id: str,
+    field_value_id: str,
+    service: ExtractionServiceDep,
+) -> ExtractedFieldValueResponse:
+    return ExtractedFieldValueResponse.from_entity(service.get_result_field(result_id, field_value_id))
+
+
+@router.get("/results/{result_id}/objects", response_model=ExtractedObjectListResponse)
+def list_extracted_objects(result_id: str, service: ExtractionServiceDep) -> ExtractedObjectListResponse:
+    return ExtractedObjectListResponse(
+        items=[ExtractedObjectResponse.from_entity(item) for item in service.list_result_objects(result_id)]
+    )
+
+
+@router.get("/results/{result_id}/array-items", response_model=ExtractedArrayItemListResponse)
+def list_extracted_array_items(
+    result_id: str,
+    field_path: str,
+    service: ExtractionServiceDep,
+) -> ExtractedArrayItemListResponse:
+    return ExtractedArrayItemListResponse(
+        items=[ExtractedArrayItemResponse.from_entity(item) for item in service.list_array_items(result_id, field_path)]
+    )
+
+
+@router.get("/fields/{field_value_id}/evidence", response_model=ExtractionEvidenceListResponse)
+def list_field_evidence(field_value_id: str, service: ExtractionServiceDep) -> ExtractionEvidenceListResponse:
+    return ExtractionEvidenceListResponse(
+        items=[ExtractionEvidenceResponse.from_entity(item) for item in service.list_field_evidence(field_value_id)]
+    )
+
+
+@router.post("/jobs/{job_id}/normalize/reprocess", response_model=ExtractionResultSummaryResponse)
+async def reprocess_job_normalization(
+    job_id: str,
+    payload: NormalizationReprocessRequest,
+    request: Request,
+    actor: CurrentPrincipal,
+    service: ExtractionServiceDep,
+) -> ExtractionResultSummaryResponse:
+    result = await service.reprocess_normalization(
+        job_id,
+        actor,
+        getattr(request.state, "correlation_id", "system"),
+        payload.reason,
+    )
+    return ExtractionResultSummaryResponse.from_entity(result)

@@ -1,5 +1,5 @@
 export type DocumentType = "balancete" | "guia_inss" | "guia_fgts" | "folha_pagamento" | "relatorio_fiscal" | "relatorio_contabil" | "extrato" | "outro" | "desconhecido";
-export type DocumentStatus = "imported" | "classified" | "template_matched" | "template_not_found" | "template_ambiguous" | "ambiguous" | "missing" | "confirmed" | "rejected" | "extraction_pending" | "extraction_running" | "extracted" | "extraction_failed" | "error";
+export type DocumentStatus = "imported" | "classified" | "template_matched" | "template_not_found" | "template_ambiguous" | "ambiguous" | "missing" | "confirmed" | "rejected" | "extraction_pending" | "extraction_running" | "extracted" | "review_pending" | "extraction_failed" | "error";
 
 export interface BoundingBox { x: number; y: number; width: number; height: number }
 export interface Evidence { document_id: string; page?: number | null; row?: number | null; column?: string | null; cell?: string | null; text?: string | null; bounding_box?: BoundingBox | null }
