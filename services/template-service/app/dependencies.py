@@ -10,6 +10,7 @@ from app.infrastructure.database.session import get_db
 from app.infrastructure.document_service import DocumentServiceHttpAdapter, DocumentServicePort
 from app.infrastructure.events import EventPublisher, NoOpEventPublisher
 from app.infrastructure.identity_gateway import IdentityGateway, Principal
+from app.modules.matching.application.service import TemplateMatchingService
 
 
 def get_identity_gateway(
@@ -52,6 +53,24 @@ def get_template_service(
         settings=settings,
         publisher=publisher,
         principal=principal,
+        correlation_id=getattr(request.state, "correlation_id", "system"),
+    )
+
+
+def get_template_matching_service(
+    request: Request,
+    session: Annotated[Session, Depends(get_db)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    publisher: Annotated[EventPublisher, Depends(get_event_publisher)],
+    principal: Annotated[Principal, Depends(get_current_principal)],
+    document_service: Annotated[DocumentServicePort, Depends(get_document_service)],
+) -> TemplateMatchingService:
+    return TemplateMatchingService(
+        session=session,
+        settings=settings,
+        publisher=publisher,
+        principal=principal,
+        document_service=document_service,
         correlation_id=getattr(request.state, "correlation_id", "system"),
     )
 

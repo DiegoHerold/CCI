@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.application.schemas import (
     AnnotationCreate,
+    AnnotationUpdate,
     ExtractionRuleCreate,
     ExtractionRuleUpdate,
     FieldCreate,
@@ -907,6 +908,21 @@ class TemplateService:
         annotation = self.session.get(TemplateAnnotation, annotation_id)
         if annotation is None or annotation.template_id != template_id:
             raise NotFoundError("Template annotation")
+        return annotation
+
+    def update_annotation(self, template_id: str, annotation_id: str, payload: AnnotationUpdate) -> TemplateAnnotation:
+        annotation = self.get_annotation(template_id, annotation_id)
+        changes = payload.model_dump(exclude_unset=True)
+        if "field_id" in changes and changes["field_id"]:
+            self._get_field(template_id, changes["field_id"])
+        if "template_version_id" in changes:
+            self._validate_mutable_version(template_id, changes["template_version_id"])
+        if "selection_payload" in changes and changes["selection_payload"] is not None:
+            self._ensure_json_size(changes["selection_payload"], self.settings.max_selection_payload_bytes, "ANNOTATION_PAYLOAD_TOO_LARGE")
+        for key, value in changes.items():
+            setattr(annotation, key, value)
+        self._publish("TemplateAnnotationUpdated", {"template_id": template_id, "annotation_id": annotation.id})
+        self.session.commit()
         return annotation
 
     def delete_annotation(self, template_id: str, annotation_id: str) -> None:

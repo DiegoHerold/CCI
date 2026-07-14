@@ -18,5 +18,23 @@
     "is_array": {"type": "boolean"},
     "order_index": {"type": "integer", "minimum": 0}
   },
+  "$defs": {
+    "FieldTreeNode": {
+      "type": "object",
+      "required": ["key", "label", "path", "children"],
+      "properties": {
+        "key": {"type": "string"},
+        "label": {"type": "string"},
+        "path": {"type": "string"},
+        "field": {"anyOf": [{"$ref": "#"}, {"type": "null"}]},
+        "children": {"type": "array", "items": {"$ref": "#/$defs/FieldTreeNode"}}
+      },
+      "additionalProperties": false
+    },
+    "FieldMappingStatus": {
+      "type": "string",
+      "enum": ["unmapped", "mapped", "partial"]
+    }
+  },
   "additionalProperties": false
 }

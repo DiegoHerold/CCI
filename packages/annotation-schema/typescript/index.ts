@@ -35,3 +35,23 @@ export interface TemplateAnnotation {
 }
 
 export type Annotation = TemplateAnnotation;
+
+export interface CreateAnnotationRequest {
+  template_version_id?: string | null;
+  field_id: string;
+  document_id: string;
+  annotation_type: AnnotationType;
+  source_preview_id?: string | null;
+  selected_text?: string | null;
+  selection_payload: Record<string, unknown>;
+}
+
+export interface CreateAnnotationResponse {
+  annotation: TemplateAnnotation;
+}
+
+export interface CreateAnnotationWithRuleRequest extends CreateAnnotationRequest {
+  generate_rule: boolean;
+  rule_strategy?: string | null;
+  rule_config?: Record<string, unknown> | null;
+}

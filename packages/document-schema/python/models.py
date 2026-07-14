@@ -20,6 +20,9 @@ class DocumentType(str, Enum):
 class DocumentStatus(str, Enum):
     IMPORTED = "imported"
     CLASSIFIED = "classified"
+    TEMPLATE_MATCHED = "template_matched"
+    TEMPLATE_NOT_FOUND = "template_not_found"
+    TEMPLATE_AMBIGUOUS = "template_ambiguous"
     AMBIGUOUS = "ambiguous"
     MISSING = "missing"
     CONFIRMED = "confirmed"

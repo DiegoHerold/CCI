@@ -8,6 +8,7 @@ import {
   Gauge,
   ListChecks,
   ScrollText,
+  ScanLine,
   Settings2,
   SlidersHorizontal,
   Users,
@@ -28,6 +29,7 @@ export const navigationGroups = [
     label: "Configuração",
     items: [
       { label: "Modelos", href: "/models", icon: Boxes, permission: "conferences:read", future: true },
+      { label: "Templates", href: "/templates", icon: ScanLine, permission: "conferences:read" },
       { label: "Variáveis", href: "/variables", icon: SlidersHorizontal, permission: "conferences:read", future: true },
       { label: "Regras", href: "/rules", icon: ListChecks, permission: "conferences:read", future: true },
     ],

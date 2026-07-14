@@ -8,6 +8,7 @@ from app.api.routes.executions import router as executions_router
 from app.api.routes.health import router as health_router
 from app.api.routes.logs import router as logs_router
 from app.api.routes.platform import router as platform_router
+from app.api.routes.template_matching import router as template_matching_router
 from app.api.routes.templates import router as templates_router
 from app.api.routes.users import router as users_router
 from app.config import get_settings
@@ -30,6 +31,7 @@ def create_app() -> FastAPI:
     application.include_router(auth_router)
     application.include_router(users_router)
     application.include_router(clients_router)
+    application.include_router(template_matching_router)
     application.include_router(documents_router)
     application.include_router(templates_router)
     application.include_router(executions_router)

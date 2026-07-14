@@ -106,3 +106,23 @@ class TemplateAnnotation(BaseModel):
 
 
 Annotation = TemplateAnnotation
+
+
+class CreateAnnotationRequest(BaseModel):
+    template_version_id: str | None = None
+    field_id: str
+    document_id: str
+    annotation_type: AnnotationType
+    source_preview_id: str | None = None
+    selected_text: str | None = None
+    selection_payload: dict[str, Any]
+
+
+class CreateAnnotationResponse(BaseModel):
+    annotation: TemplateAnnotation
+
+
+class CreateAnnotationWithRuleRequest(CreateAnnotationRequest):
+    generate_rule: bool = True
+    rule_strategy: str | None = None
+    rule_config: dict[str, Any] | None = None

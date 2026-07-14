@@ -1,4 +1,4 @@
-.PHONY: up down restart logs ps build migrate seed test lint format reset clean infra-up infra-down infra-check create-buckets create-schemas packages-test postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health document-logs document-shell document-migrate document-test document-health template-logs template-shell template-migrate template-test template-health parser-logs parser-shell parser-test parser-health bff-logs bff-shell bff-test bff-health
+.PHONY: up down restart logs ps build migrate seed test lint format reset clean infra-up infra-down infra-check create-buckets create-schemas packages-test postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health document-logs document-shell document-migrate document-test document-health template-logs template-shell template-migrate template-test template-matching-test template-health parser-logs parser-shell parser-test parser-health bff-logs bff-shell bff-test bff-health
 
 up:
 	docker compose up -d
@@ -133,6 +133,9 @@ template-migrate:
 
 template-test:
 	docker compose --profile test run --rm template-service-test
+
+template-matching-test:
+	docker compose --profile test run --rm template-service-test pytest -q tests/unit/test_template_matching.py
 
 template-health:
 	curl -fsS http://localhost:8120/health

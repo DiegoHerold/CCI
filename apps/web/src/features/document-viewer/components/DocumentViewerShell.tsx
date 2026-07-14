@@ -107,6 +107,7 @@ export function DocumentViewerShell({
   onReload,
   onRequestPreview,
   onReprocessPreview,
+  sidePanel,
 }: {
   document: DocumentRecord | null;
   preview: ParsedDocumentPreview | null;
@@ -121,6 +122,7 @@ export function DocumentViewerShell({
   onReload: () => void;
   onRequestPreview: () => void;
   onReprocessPreview: () => void;
+  sidePanel?: React.ReactNode;
 }) {
   const [zoom, setZoom] = useState(0.95);
   const [currentPage, setCurrentPage] = useState(1);
@@ -195,7 +197,7 @@ export function DocumentViewerShell({
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <main>{viewer}</main>
         <aside>
-          <SelectionPanel selection={selection} onClear={onClearSelection} />
+          {sidePanel ?? <SelectionPanel selection={selection} onClear={onClearSelection} />}
         </aside>
       </div>
     </div>

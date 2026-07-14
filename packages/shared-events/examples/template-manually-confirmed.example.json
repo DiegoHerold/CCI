@@ -1,0 +1,22 @@
+{
+  "event_id": "evt_template_manually_confirmed_123",
+  "event_type": "TemplateManuallyConfirmed",
+  "version": 1,
+  "occurred_at": "2026-07-14T10:10:00Z",
+  "correlation_id": "corr_template_match_123",
+  "producer": "template-service",
+  "document_id": "doc_123",
+  "client_id": "client_123",
+  "competence_id": "competence_2026_07",
+  "payload": {
+    "document_id": "doc_123",
+    "client_id": "client_123",
+    "competence_id": "competence_2026_07",
+    "template_id": "tpl_123",
+    "template_version_id": "tplv_1",
+    "category_id": "cat_balancete",
+    "confidence": 1.0,
+    "matching_run_id": "match_123",
+    "reason": "Selecionado manualmente apos ambiguidade"
+  }
+}

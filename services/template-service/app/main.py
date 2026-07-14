@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.api.routes.annotation_routes import router as annotation_router
+from app.api.routes.builder_routes import router as builder_router
 from app.api.routes.category_routes import router as category_router
 from app.api.routes.extraction_rule_routes import router as extraction_rule_router
 from app.api.routes.field_routes import router as field_router
@@ -12,6 +13,7 @@ from app.config import get_settings
 from app.errors import register_exception_handlers
 from app.logging_config import configure_logging
 from app.middleware import CorrelationIdMiddleware, RequestLoggingMiddleware
+from app.modules.matching.api.routes import router as matching_router
 
 
 def create_app() -> FastAPI:
@@ -30,6 +32,8 @@ def create_app() -> FastAPI:
     application.include_router(annotation_router)
     application.include_router(extraction_rule_router)
     application.include_router(version_router)
+    application.include_router(builder_router)
+    application.include_router(matching_router)
     application.add_middleware(RequestLoggingMiddleware)
     application.add_middleware(CorrelationIdMiddleware)
     register_exception_handlers(application)

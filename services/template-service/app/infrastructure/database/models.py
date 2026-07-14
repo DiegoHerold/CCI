@@ -262,3 +262,109 @@ class ExtractionRule(Base):
     field: Mapped[TemplateField] = relationship()
     template_version: Mapped[TemplateVersion | None] = relationship()
     created_from_annotation: Mapped[TemplateAnnotation | None] = relationship()
+
+
+class DocumentProfile(Base):
+    __tablename__ = "document_profiles"
+    __table_args__ = (
+        Index("ix_template_document_profiles_document", "document_id"),
+        Index("ix_template_document_profiles_format", "file_format"),
+        Index("ix_template_document_profiles_created", "created_at"),
+        {"schema": "template"},
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    document_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    file_format: Mapped[str] = mapped_column(String(32), nullable=False)
+    profile_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    profile_version: Mapped[str] = mapped_column(String(32), nullable=False, default="v1")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class TemplateMatchingRun(Base):
+    __tablename__ = "template_matching_runs"
+    __table_args__ = (
+        Index("ix_template_matching_runs_document", "document_id"),
+        Index("ix_template_matching_runs_status", "status"),
+        Index("ix_template_matching_runs_template", "matched_template_id"),
+        Index("ix_template_matching_runs_created", "created_at"),
+        {"schema": "template"},
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    document_profile_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("template.document_profiles.id", ondelete="SET NULL"), nullable=True
+    )
+    document_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    matched_template_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("template.templates.id", ondelete="SET NULL"), nullable=True
+    )
+    matched_template_version_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("template.template_versions.id", ondelete="SET NULL"), nullable=True
+    )
+    matched_category_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("template.categories.id", ondelete="SET NULL"), nullable=True
+    )
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    decision_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    manual_override: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_by: Mapped[str] = mapped_column(String(36), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    document_profile: Mapped[DocumentProfile | None] = relationship()
+    matched_template: Mapped[Template | None] = relationship()
+    matched_template_version: Mapped[TemplateVersion | None] = relationship()
+    matched_category: Mapped[TemplateCategory | None] = relationship()
+    candidates: Mapped[list["TemplateMatchingCandidate"]] = relationship(
+        back_populates="matching_run", cascade="all, delete-orphan"
+    )
+
+
+class TemplateMatchingCandidate(Base):
+    __tablename__ = "template_matching_candidates"
+    __table_args__ = (
+        Index("ix_template_matching_candidates_run", "matching_run_id"),
+        Index("ix_template_matching_candidates_template", "template_id"),
+        Index("ix_template_matching_candidates_score", "score"),
+        Index("ix_template_matching_candidates_rank", "rank_position"),
+        {"schema": "template"},
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    matching_run_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("template.template_matching_runs.id", ondelete="CASCADE"), nullable=False
+    )
+    template_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("template.templates.id", ondelete="CASCADE"), nullable=False
+    )
+    template_version_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("template.template_versions.id", ondelete="SET NULL"), nullable=True
+    )
+    category_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("template.categories.id", ondelete="SET NULL"), nullable=True
+    )
+    score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    rank_position: Mapped[int] = mapped_column(Integer, nullable=False)
+    matched_signals: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    missing_required_signals: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    negative_matches: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    score_details: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    matching_run: Mapped[TemplateMatchingRun] = relationship(back_populates="candidates")
+    template: Mapped[Template] = relationship()
+    template_version: Mapped[TemplateVersion | None] = relationship()
+    category: Mapped[TemplateCategory | None] = relationship()

@@ -18,7 +18,7 @@ export type DocumentViewerLoadState =
   | "empty_preview"
   | "error";
 
-export function useDocumentPreview(documentId: string) {
+export function useDocumentPreview(documentId: string, enabled = true) {
   const [document, setDocument] = useState<DocumentRecord | null>(null);
   const [preview, setPreview] = useState<ParsedDocumentPreview | null>(null);
   const [status, setStatus] = useState<DocumentPreviewStatus | null>(null);
@@ -87,9 +87,13 @@ export function useDocumentPreview(documentId: string) {
   }, [deriveReadyState, documentId]);
 
   useEffect(() => {
+    if (!enabled) {
+      setState("preview_missing");
+      return;
+    }
     const timeout = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(timeout);
-  }, [load]);
+  }, [enabled, load]);
 
   const requestPreview = useCallback(async () => {
     setBusyAction("request");

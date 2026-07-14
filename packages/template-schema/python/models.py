@@ -17,6 +17,13 @@ class TemplateVersionStatus(str, Enum):
     ARCHIVED = "archived"
 
 
+class TemplateMatchingStatus(str, Enum):
+    MATCHED = "matched"
+    NOT_FOUND = "not_found"
+    AMBIGUOUS = "ambiguous"
+    FAILED = "failed"
+
+
 class TemplateFileFormat(str, Enum):
     PDF = "PDF"
     XLSX = "XLSX"
@@ -107,6 +114,18 @@ class TemplateVersion(BaseModel):
     snapshot: dict[str, Any] = Field(default_factory=dict)
 
 
+class ExtractionRule(BaseModel):
+    id: str | None = None
+    template_id: str | None = None
+    template_version_id: str | None = None
+    field_id: str
+    rule_type: str | None = None
+    strategy: ExtractionStrategy
+    config: dict[str, Any] = Field(default_factory=dict)
+    confidence_hint: float | None = Field(default=None, ge=0, le=1)
+    created_from_annotation_id: str | None = None
+
+
 class TemplateSummary(Template):
     field_count: int = 0
     extraction_rule_count: int = 0
@@ -115,3 +134,78 @@ class TemplateSummary(Template):
 class TemplateDetail(Template):
     identification_signals: list[IdentificationSignal] = Field(default_factory=list)
     versions: list[TemplateVersion] = Field(default_factory=list)
+
+
+class TemplateBuilderState(BaseModel):
+    template: TemplateDetail
+    active_version: TemplateVersion | None = None
+    draft_version: TemplateVersion | None = None
+    fields: list[dict[str, Any]] = Field(default_factory=list)
+    annotations: list[dict[str, Any]] = Field(default_factory=list)
+    extraction_rules: list[ExtractionRule] = Field(default_factory=list)
+    identification_signals: list[IdentificationSignal] = Field(default_factory=list)
+
+
+class TemplateBuilderSaveRequest(BaseModel):
+    fields: list[dict[str, Any]] = Field(default_factory=list)
+    annotations: list[dict[str, Any]] = Field(default_factory=list)
+    extraction_rules: list[ExtractionRule] = Field(default_factory=list)
+
+
+class DocumentProfile(BaseModel):
+    document_id: str
+    client_id: str | None = None
+    competence_id: str | None = None
+    file_format: TemplateFileFormat
+    mime_type: str | None = None
+    original_filename: str | None = None
+    page_count: int = Field(default=0, ge=0)
+    sheet_count: int = Field(default=0, ge=0)
+    requires_ocr: bool = False
+    text_sample: str = ""
+    normalized_text_sample: str = ""
+    detected_keywords: list[str] = Field(default_factory=list)
+    detected_regex_patterns: list[str] = Field(default_factory=list)
+    has_cnpj: bool = False
+    has_dates: bool = False
+    has_currency_values: bool = False
+    has_tables: bool = False
+    structure_hints: list[str] = Field(default_factory=list)
+    sheet_names: list[str] = Field(default_factory=list)
+    detected_headers: list[str] = Field(default_factory=list)
+
+
+class TemplateMatchingRequest(BaseModel):
+    force_reprocess: bool = False
+    category_hint: str | None = None
+    max_candidates: int | None = Field(default=None, ge=1, le=100)
+
+
+class TemplateMatchingCandidate(BaseModel):
+    template_id: str
+    template_version_id: str | None = None
+    category_id: str | None = None
+    template_name: str | None = None
+    category_name: str | None = None
+    score: float = Field(ge=0, le=1)
+    rank_position: int = Field(ge=1)
+    matched_signals: list[str] = Field(default_factory=list)
+    missing_required_signals: list[str] = Field(default_factory=list)
+    negative_matches: list[str] = Field(default_factory=list)
+    score_details: dict[str, Any] = Field(default_factory=dict)
+
+
+class TemplateMatchingResult(BaseModel):
+    matching_run_id: str
+    document_id: str
+    status: TemplateMatchingStatus
+    matched_template_id: str | None = None
+    matched_template_version_id: str | None = None
+    matched_category_id: str | None = None
+    confidence: float = Field(ge=0, le=1)
+    decision_reason: str
+    manual_override: bool = False
+    candidates: list[TemplateMatchingCandidate] = Field(default_factory=list)
+
+
+TemplateMatchingRun = TemplateMatchingResult

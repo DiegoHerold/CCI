@@ -61,3 +61,16 @@ def test_template_categories_proxy() -> None:
 
     assert response.status_code == 200
     assert fake_template_service.path == "/template-categories"
+
+
+def test_template_builder_routes_proxy_to_template_service() -> None:
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/templates/template-1/annotations/with-rule",
+            headers={"Authorization": "Bearer token"},
+            json={"fieldId": "field-1", "documentId": "doc-1", "generateRule": True},
+        )
+
+    assert response.status_code == 200
+    assert fake_template_service.path == "/templates/template-1/annotations/with-rule"
+    assert fake_template_service.payload == {"fieldId": "field-1", "documentId": "doc-1", "generateRule": True}

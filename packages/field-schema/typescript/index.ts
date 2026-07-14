@@ -58,3 +58,38 @@ export interface FieldCard {
   is_repeated: boolean;
   evidence_required: boolean;
 }
+
+export interface FieldTreeNode {
+  key: string;
+  label: string;
+  path: string;
+  field?: FieldDefinition | null;
+  children: FieldTreeNode[];
+}
+
+export interface CreateFieldRequest {
+  parent_field_id?: string | null;
+  field_path: string;
+  label: string;
+  description?: string | null;
+  field_type: FieldType;
+  is_required: boolean;
+  is_repeated: boolean;
+  is_object: boolean;
+  is_array: boolean;
+  order_index: number;
+}
+
+export interface UpdateFieldRequest {
+  parent_field_id?: string | null;
+  label?: string | null;
+  description?: string | null;
+  field_type?: FieldType | null;
+  is_required?: boolean | null;
+  is_repeated?: boolean | null;
+  is_object?: boolean | null;
+  is_array?: boolean | null;
+  order_index?: number | null;
+}
+
+export type FieldMappingStatus = "unmapped" | "mapped" | "partial";

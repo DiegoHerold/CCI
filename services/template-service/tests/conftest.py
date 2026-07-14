@@ -15,7 +15,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
-from app.dependencies import get_event_publisher, get_identity_gateway
+from app.dependencies import get_document_service, get_event_publisher, get_identity_gateway
 from app.infrastructure.database.session import SessionLocal
 from app.infrastructure.events import DomainEvent, EventPublisher
 from app.infrastructure.identity_gateway import Principal
@@ -45,17 +45,43 @@ class FakeEventPublisher(EventPublisher):
 
 
 fake_publisher = FakeEventPublisher()
+
+
+class FakeDocumentService:
+    def __init__(self) -> None:
+        self.documents: dict[str, dict] = {}
+        self.previews: dict[str, dict] = {}
+
+    async def get_document(
+        self, document_id: str, *, authorization: str, correlation_id: str
+    ) -> dict | None:
+        return self.documents.get(document_id)
+
+    async def get_preview(
+        self, document_id: str, *, authorization: str, correlation_id: str
+    ) -> dict | None:
+        return self.previews.get(document_id)
+
+    def reset(self) -> None:
+        self.documents.clear()
+        self.previews.clear()
+
+
+fake_document_service = FakeDocumentService()
 app.dependency_overrides[get_identity_gateway] = lambda: FakeIdentityGateway()
 app.dependency_overrides[get_event_publisher] = lambda: fake_publisher
+app.dependency_overrides[get_document_service] = lambda: fake_document_service
 
 
 @pytest.fixture(autouse=True)
 def reset_database() -> Generator[None, None, None]:
     fake_publisher.events.clear()
+    fake_document_service.reset()
     with SessionLocal() as session:
         session.execute(
             text(
-                "TRUNCATE template.extraction_rules, template.template_annotations, "
+                "TRUNCATE template.template_matching_candidates, template.template_matching_runs, "
+                "template.document_profiles, template.extraction_rules, template.template_annotations, "
                 "template.identification_signals, template.template_fields, "
                 "template.template_versions, template.templates, template.categories CASCADE"
             )

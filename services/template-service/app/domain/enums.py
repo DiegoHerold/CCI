@@ -14,6 +14,13 @@ class TemplateVersionStatus(str, Enum):
     ARCHIVED = "archived"
 
 
+class TemplateMatchingStatus(str, Enum):
+    MATCHED = "matched"
+    NOT_FOUND = "not_found"
+    AMBIGUOUS = "ambiguous"
+    FAILED = "failed"
+
+
 class TemplateFileFormat(str, Enum):
     PDF = "PDF"
     XLSX = "XLSX"

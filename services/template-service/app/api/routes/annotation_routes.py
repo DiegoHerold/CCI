@@ -2,7 +2,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
 
-from app.application.schemas import AnnotationCreate, AnnotationListResponse, AnnotationResponse
+from app.application.schemas import (
+    AnnotationCreate,
+    AnnotationListResponse,
+    AnnotationResponse,
+    AnnotationUpdate,
+)
 from app.application.services import TemplateService
 from app.dependencies import get_template_service
 
@@ -42,6 +47,16 @@ def list_annotations(
 @router.get("/templates/{template_id}/annotations/{annotation_id}", response_model=AnnotationResponse)
 def get_annotation(template_id: str, annotation_id: str, service: TemplateServiceDep) -> AnnotationResponse:
     return AnnotationResponse.from_entity(service.get_annotation(template_id, annotation_id))
+
+
+@router.patch("/templates/{template_id}/annotations/{annotation_id}", response_model=AnnotationResponse)
+def update_annotation(
+    template_id: str,
+    annotation_id: str,
+    payload: AnnotationUpdate,
+    service: TemplateServiceDep,
+) -> AnnotationResponse:
+    return AnnotationResponse.from_entity(service.update_annotation(template_id, annotation_id, payload))
 
 
 @router.delete("/templates/{template_id}/annotations/{annotation_id}", status_code=204)

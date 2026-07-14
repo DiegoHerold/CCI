@@ -802,3 +802,132 @@ class TemplateDetail(TemplateSummary):
             extraction_rules=[ExtractionRuleResponse.from_entity(item) for item in entity.extraction_rules],
             versions=[TemplateVersionResponse.from_entity(item) for item in entity.versions],
         )
+
+
+class TemplateMatchingRequest(ApiModel):
+    force_reprocess: bool = False
+    category_hint: str | None = Field(default=None, max_length=36)
+    max_candidates: int | None = Field(default=None, ge=1, le=100)
+
+
+class TemplateMatchConfirmRequest(ApiModel):
+    template_id: str = Field(min_length=1, max_length=36)
+    template_version_id: str = Field(min_length=1, max_length=36)
+    reason: str = Field(min_length=1, max_length=4096)
+
+
+class DocumentProfileResponse(ApiModel):
+    id: str
+    document_id: str
+    file_format: str
+    profile_version: str
+    profile_json: dict[str, Any]
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class TemplateMatchingCandidateResponse(ApiModel):
+    id: str
+    matching_run_id: str
+    template_id: str
+    template_version_id: str | None = None
+    category_id: str | None = None
+    template_name: str | None = None
+    category_name: str | None = None
+    score: float
+    rank_position: int
+    matched_signals: list[str] = Field(default_factory=list)
+    missing_required_signals: list[str] = Field(default_factory=list)
+    negative_matches: list[str] = Field(default_factory=list)
+    score_details: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime | None = None
+
+    @classmethod
+    def from_entity(cls, entity: Any) -> "TemplateMatchingCandidateResponse":
+        return cls(
+            id=entity.id,
+            matching_run_id=entity.matching_run_id,
+            template_id=entity.template_id,
+            template_version_id=entity.template_version_id,
+            category_id=entity.category_id,
+            template_name=entity.template.name if getattr(entity, "template", None) else None,
+            category_name=entity.category.name if getattr(entity, "category", None) else None,
+            score=entity.score,
+            rank_position=entity.rank_position,
+            matched_signals=entity.matched_signals or [],
+            missing_required_signals=entity.missing_required_signals or [],
+            negative_matches=entity.negative_matches or [],
+            score_details=entity.score_details or {},
+            created_at=entity.created_at,
+        )
+
+
+class TemplateMatchingRunResponse(ApiModel):
+    matching_run_id: str
+    document_id: str
+    status: str
+    matched_template_id: str | None = None
+    matched_template_version_id: str | None = None
+    matched_category_id: str | None = None
+    confidence: float
+    decision_reason: str
+    manual_override: bool = False
+    candidates: list[TemplateMatchingCandidateResponse] = Field(default_factory=list)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @classmethod
+    def from_entity(cls, entity: Any) -> "TemplateMatchingRunResponse":
+        return cls(
+            matching_run_id=entity.id,
+            document_id=entity.document_id,
+            status=entity.status,
+            matched_template_id=entity.matched_template_id,
+            matched_template_version_id=entity.matched_template_version_id,
+            matched_category_id=entity.matched_category_id,
+            confidence=entity.confidence,
+            decision_reason=entity.decision_reason,
+            manual_override=entity.manual_override,
+            candidates=[
+                TemplateMatchingCandidateResponse.from_entity(candidate)
+                for candidate in sorted(entity.candidates, key=lambda item: item.rank_position)
+            ],
+            created_at=entity.created_at,
+            updated_at=entity.updated_at,
+        )
+
+
+class TemplateMatchingRunListResponse(ApiModel):
+    items: list[TemplateMatchingRunResponse]
+
+
+class AnnotationUpdate(ApiModel):
+    template_version_id: str | None = Field(default=None, max_length=36)
+    field_id: str | None = Field(default=None, min_length=1, max_length=36)
+    source_preview_id: str | None = Field(default=None, max_length=36)
+    selected_text: str | None = Field(default=None, max_length=16384)
+    selection_payload: dict[str, Any] | None = None
+
+
+class AnnotationWithRuleCreate(AnnotationCreate):
+    generate_rule: bool = True
+    rule_strategy: ExtractionStrategy | None = None
+    rule_config: dict[str, Any] | None = None
+    confidence_hint: float | None = Field(default=None, ge=0, le=1)
+
+
+class AnnotationWithRuleResponse(ApiModel):
+    annotation: AnnotationResponse
+    extraction_rule: ExtractionRuleResponse | None = None
+    suggested_strategy: ExtractionStrategy | None = None
+    suggested_config: dict[str, Any] = Field(default_factory=dict)
+
+
+class TemplateBuilderStateResponse(ApiModel):
+    template: TemplateDetail
+    active_version: TemplateVersionResponse | None = None
+    draft_version: TemplateVersionResponse | None = None
+    fields: list[FieldResponse] = Field(default_factory=list)
+    annotations: list[AnnotationResponse] = Field(default_factory=list)
+    extraction_rules: list[ExtractionRuleResponse] = Field(default_factory=list)
+    identification_signals: list[IdentificationSignalResponse] = Field(default_factory=list)
