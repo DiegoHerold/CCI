@@ -202,6 +202,7 @@ class ExtractionResultService:
             raw_status=raw_status,
         )
         is_required = bool(definition.get("isRequired") or definition.get("required") or definition.get("is_required"))
+        important = bool(definition.get("important") or definition.get("isImportant") or definition.get("is_important"))
         status = self.confidence.status(
             raw_status=raw_status,
             normalization_success=normalized.success,
@@ -217,7 +218,7 @@ class ExtractionResultService:
             "normalized_value": None if normalized.normalized_value is None else str(normalized.normalized_value),
             "display_value": normalized.display_value,
             "normalized_json": {"value": normalized.normalized_value, "success": normalized.success, "error_code": normalized.error_code},
-            "metadata_json": normalized.metadata,
+            "metadata_json": normalized.metadata | {"important": important, "label": definition.get("label")},
             "confidence": final_confidence,
             "status": status,
             "is_required": is_required,

@@ -41,15 +41,15 @@ export function PdfPageCanvas({
 
   return (
     <div className="mx-auto w-fit rounded-2xl border border-border-strong bg-black/30 p-4 shadow-2xl shadow-black/25">
-      <div className="mb-3 flex items-center justify-between text-xs text-muted">
+      <div className="mb-3 flex items-center justify-between gap-3 text-xs text-muted">
         <span>Página {page.page_number}</span>
-        <span>{Math.round(page.width)} × {Math.round(page.height)} · rotação {page.rotation}°</span>
+        <span>{page.lines.length} linhas | {page.text_blocks.length} blocos | {Math.round(page.width)} x {Math.round(page.height)} | rotacao {page.rotation} graus</span>
       </div>
       <div
         ref={ref}
         role="region"
         aria-label={`Página PDF ${page.page_number}`}
-        className="relative overflow-hidden rounded-lg bg-[#f8fafc] shadow-inner"
+        className="relative overflow-hidden rounded-lg bg-white shadow-inner"
         style={{ width: page.width * scale, height: page.height * scale }}
         onPointerDown={(event) => {
           if (event.button !== 0) return;
@@ -77,7 +77,7 @@ export function PdfPageCanvas({
           }
         }}
       >
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,.04)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,.04)_1px,transparent_1px)] bg-[size:24px_24px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,.018)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,.018)_1px,transparent_1px)] bg-[size:24px_24px]" />
         <PdfEvidenceHighlightLayer pageNumber={page.page_number} scale={scale} evidences={evidences} />
         <PdfTextOverlay documentId={documentId} page={page} scale={scale} selection={selection} onSelect={onSelect} />
         {previewBox && (

@@ -36,4 +36,16 @@ export const documentPreviewApi = {
   reprocessPreview(documentId: string) {
     return apiRequest<PreviewRequestResponse>(`/documents/${documentId}/preview/reprocess`, { method: "POST" });
   },
+
+  upload(payload: { file: File; clientId: string; competenceId: string }) {
+    const formData = new FormData();
+    formData.set("file", payload.file);
+    formData.set("client_id", payload.clientId);
+    formData.set("competence_id", payload.competenceId);
+    const isZip = payload.file.name.toLowerCase().endsWith(".zip");
+    return apiRequest<DocumentRecord>(isZip ? "/documents/upload-zip" : "/documents/upload", {
+      method: "POST",
+      body: formData,
+    });
+  },
 };

@@ -1,11 +1,11 @@
-import { DocumentFlowPage } from "@/features/document-intake/components/DocumentFlowPage";
 import { RequirePermission } from "@/features/auth/require-permission";
+import { ExtractionReviewPage } from "@/features/extraction-review/components/ExtractionReviewPage";
 
 export default async function Page({ params }: { params: Promise<{ documentId: string }> }) {
   const { documentId } = await params;
   return (
     <RequirePermission permission="conferences:read">
-      <DocumentFlowPage documentId={documentId} />
+      <ExtractionReviewPage documentId={documentId} />
     </RequirePermission>
   );
 }

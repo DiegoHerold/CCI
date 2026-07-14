@@ -285,6 +285,37 @@ class ExtractedFieldValue(Base):
     result: Mapped[ExtractionResult] = relationship(back_populates="fields")
 
 
+class ExtractedFieldReview(Base):
+    __tablename__ = "extracted_field_reviews"
+    __table_args__ = (
+        Index("ix_extracted_field_reviews_field", "field_value_id"),
+        Index("ix_extracted_field_reviews_result", "extraction_result_id"),
+        Index("ix_extracted_field_reviews_action", "action"),
+        {"schema": "extraction"},
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    extraction_result_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("extraction.extraction_results.id", ondelete="CASCADE"), nullable=False
+    )
+    field_value_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("extraction.extracted_field_values.id", ondelete="CASCADE"), nullable=False
+    )
+    action: Mapped[str] = mapped_column(String(32), nullable=False)
+    previous_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    previous_raw_value: Mapped[object | None] = mapped_column(JSON, nullable=True)
+    previous_normalized_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    previous_display_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    previous_normalized_json: Mapped[object | None] = mapped_column(JSON, nullable=True)
+    new_raw_value: Mapped[object | None] = mapped_column(JSON, nullable=True)
+    new_normalized_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    new_display_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    new_normalized_json: Mapped[object | None] = mapped_column(JSON, nullable=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    reviewed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
 class ExtractionEvidence(Base):
     __tablename__ = "extraction_evidences"
     __table_args__ = (

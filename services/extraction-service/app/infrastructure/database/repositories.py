@@ -12,6 +12,7 @@ from app.domain.enums import (
 from app.errors import BusinessRuleError, NotFoundError
 from app.infrastructure.database.models import (
     ExtractedArrayItem,
+    ExtractedFieldReview,
     ExtractedFieldValue,
     ExtractedObject,
     ExtractionEvidence,
@@ -468,3 +469,64 @@ class ExtractionResultRepository:
                 .order_by(ExtractionEvidence.created_at)
             ).scalars()
         )
+
+    def record_field_review(
+        self,
+        field: ExtractedFieldValue,
+        *,
+        action: str,
+        reviewed_by: str,
+        reason: str | None = None,
+        new_raw_value: object | None = None,
+        new_normalized_value: str | None = None,
+        new_display_value: str | None = None,
+        new_normalized_json: object | None = None,
+        new_metadata_json: object | None = None,
+        new_status: str,
+    ) -> ExtractedFieldReview:
+        review = ExtractedFieldReview(
+            extraction_result_id=field.extraction_result_id,
+            field_value_id=field.id,
+            action=action,
+            previous_status=field.status,
+            previous_raw_value=field.raw_value,
+            previous_normalized_value=field.normalized_value,
+            previous_display_value=field.display_value,
+            previous_normalized_json=field.normalized_json,
+            new_raw_value=new_raw_value if new_raw_value is not None else field.raw_value,
+            new_normalized_value=new_normalized_value,
+            new_display_value=new_display_value,
+            new_normalized_json=new_normalized_json,
+            reason=reason,
+            reviewed_by=reviewed_by,
+        )
+        self.session.add(review)
+        if action == "correct":
+            field.raw_value = new_raw_value
+            field.normalized_value = new_normalized_value
+            field.display_value = new_display_value
+            field.normalized_json = new_normalized_json
+            field.metadata_json = new_metadata_json
+            field.confidence = 1.0
+        field.status = new_status
+        self._refresh_result_counts(field.extraction_result_id)
+        self.session.flush()
+        return review
+
+    def _refresh_result_counts(self, result_id: str) -> None:
+        result = self.get_result(result_id)
+        fields = list(
+            self.session.execute(
+                select(ExtractedFieldValue).where(ExtractedFieldValue.extraction_result_id == result_id)
+            ).scalars()
+        )
+        review_statuses = {"requires_review", "normalization_failed", "low_confidence", "evidence_missing", "ambiguous", "not_found"}
+        result.field_count = len(fields)
+        result.normalized_count = sum(1 for field in fields if field.status in {"normalized", "approved", "corrected"})
+        result.requires_review_count = sum(1 for field in fields if field.status in review_statuses)
+        if result.requires_review_count:
+            result.status = "requires_review"
+        elif result.error_count or result.warning_count:
+            result.status = "completed_with_warnings"
+        else:
+            result.status = "completed"

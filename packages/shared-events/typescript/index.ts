@@ -12,6 +12,8 @@ export type EventType =
   | "ExtractionCancelled" | "ExtractionReviewed"
   | "ExtractionNormalizationStarted" | "ExtractionNormalizationCompleted"
   | "ExtractionNormalizationFailed" | "ExtractionResultsSaved" | "ExtractionRequiresReview"
+  | "ExtractionFieldCorrected" | "ExtractionFieldApproved" | "ExtractionFieldRejected"
+  | "ExtractionResultApproved"
   | "RulePublished" | "RuleExecutionCompleted"
   | "ConferenceStarted" | "ConferenceCompleted"
   | "ReportRequested" | "ReportGenerated"

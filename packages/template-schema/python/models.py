@@ -209,3 +209,55 @@ class TemplateMatchingResult(BaseModel):
 
 
 TemplateMatchingRun = TemplateMatchingResult
+
+
+class SuggestedTemplate(BaseModel):
+    name: str
+    category: str
+    file_format: str
+    structure_type: str = "unknown"
+
+
+class SuggestedField(BaseModel):
+    field_path: str
+    label: str
+    field_type: str
+    important: bool = False
+    required: bool = False
+    raw_sample: Any = None
+    normalized_preview: str | None = None
+    display_value: str | None = None
+    confidence: float = Field(default=0, ge=0, le=1)
+
+
+class SuggestedArray(BaseModel):
+    field_path: str
+    label: str
+    item_fields: list[str] = Field(default_factory=list)
+    confidence: float = Field(default=0, ge=0, le=1)
+
+
+class SuggestedRule(BaseModel):
+    field_path: str
+    strategy: ExtractionStrategy
+    config: dict[str, Any] = Field(default_factory=dict)
+    confidence: float = Field(default=0, ge=0, le=1)
+
+
+class TemplateSuggestion(BaseModel):
+    document_id: str
+    suggested_template: SuggestedTemplate
+    suggested_fields: list[SuggestedField] = Field(default_factory=list)
+    suggested_arrays: list[SuggestedArray] = Field(default_factory=list)
+    suggested_rules: list[SuggestedRule] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class RulePreviewNormalization(BaseModel):
+    field_path: str
+    raw_value: Any = None
+    normalized_value: Any = None
+    display_value: str | None = None
+    status: str
+    confidence: float = Field(default=0, ge=0, le=1)
+    evidence: dict[str, Any] = Field(default_factory=dict)

@@ -277,3 +277,22 @@ class ExtractionResultSummary(BaseModel):
 class ExtractionResultDetail(ExtractionResult):
     fields: list[ExtractedFieldValue] = Field(default_factory=list)
     array_items: list[ExtractedArrayItem] = Field(default_factory=list)
+
+
+class FieldCorrectionRequest(BaseModel):
+    raw_value: Any
+    reason: str | None = None
+
+
+class FieldReviewRequest(BaseModel):
+    reason: str | None = None
+
+
+class ExtractedFieldReview(BaseModel):
+    review_id: str | None = None
+    extraction_result_id: str
+    field_value_id: str
+    action: str
+    previous_status: ExtractedFieldStatus | str
+    reason: str | None = None
+    reviewed_by: str

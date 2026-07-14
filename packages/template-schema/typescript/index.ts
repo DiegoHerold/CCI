@@ -163,3 +163,55 @@ export interface TemplateMatchingResult {
 }
 
 export type TemplateMatchingRun = TemplateMatchingResult;
+
+export interface SuggestedTemplate {
+  name: string;
+  category: string;
+  file_format: string;
+  structure_type: string;
+}
+
+export interface SuggestedField {
+  field_path: string;
+  label: string;
+  field_type: string;
+  important: boolean;
+  required: boolean;
+  raw_sample?: unknown;
+  normalized_preview?: string | null;
+  display_value?: string | null;
+  confidence: number;
+}
+
+export interface SuggestedArray {
+  field_path: string;
+  label: string;
+  item_fields: string[];
+  confidence: number;
+}
+
+export interface SuggestedRule {
+  field_path: string;
+  strategy: ExtractionStrategy;
+  config: Record<string, unknown>;
+  confidence: number;
+}
+
+export interface TemplateSuggestion {
+  document_id: string;
+  suggested_template: SuggestedTemplate;
+  suggested_fields: SuggestedField[];
+  suggested_arrays: SuggestedArray[];
+  suggested_rules: SuggestedRule[];
+  warnings: string[];
+}
+
+export interface RulePreviewNormalization {
+  field_path: string;
+  raw_value?: unknown;
+  normalized_value?: unknown;
+  display_value?: string | null;
+  status: string;
+  confidence: number;
+  evidence: Record<string, unknown>;
+}

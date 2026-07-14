@@ -24,6 +24,7 @@ export interface FieldDefinition {
   description?: string | null;
   field_type: FieldType;
   is_required: boolean;
+  important: boolean;
   is_repeated: boolean;
   is_object: boolean;
   is_array: boolean;
@@ -59,6 +60,7 @@ export interface FieldCard {
   template_id: string;
   is_repeated: boolean;
   evidence_required: boolean;
+  important: boolean;
 }
 
 export interface FieldTreeNode {
@@ -76,6 +78,7 @@ export interface CreateFieldRequest {
   description?: string | null;
   field_type: FieldType;
   is_required: boolean;
+  important: boolean;
   is_repeated: boolean;
   is_object: boolean;
   is_array: boolean;
@@ -88,6 +91,7 @@ export interface UpdateFieldRequest {
   description?: string | null;
   field_type?: FieldType | null;
   is_required?: boolean | null;
+  important?: boolean | null;
   is_repeated?: boolean | null;
   is_object?: boolean | null;
   is_array?: boolean | null;

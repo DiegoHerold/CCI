@@ -346,6 +346,36 @@
         "error_message": { "type": ["string", "null"] }
       },
       "additionalProperties": false
+    },
+    "FieldCorrectionRequest": {
+      "type": "object",
+      "required": ["raw_value"],
+      "properties": {
+        "raw_value": true,
+        "reason": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "FieldReviewRequest": {
+      "type": "object",
+      "properties": {
+        "reason": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "ExtractedFieldReview": {
+      "type": "object",
+      "required": ["extraction_result_id", "field_value_id", "action", "previous_status", "reviewed_by"],
+      "properties": {
+        "review_id": { "type": ["string", "null"] },
+        "extraction_result_id": { "type": "string" },
+        "field_value_id": { "type": "string" },
+        "action": { "type": "string" },
+        "previous_status": { "type": "string" },
+        "reason": { "type": ["string", "null"] },
+        "reviewed_by": { "type": "string" }
+      },
+      "additionalProperties": false
     }
   }
 }

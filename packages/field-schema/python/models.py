@@ -34,6 +34,7 @@ class FieldDefinition(BaseModel):
     description: str | None = None
     field_type: FieldType
     is_required: bool = False
+    important: bool = False
     is_repeated: bool = False
     is_object: bool = False
     is_array: bool = False
@@ -69,6 +70,7 @@ class FieldCard(BaseModel):
     template_id: str
     is_repeated: bool = False
     evidence_required: bool = True
+    important: bool = False
 
 
 class FieldTreeNode(BaseModel):
@@ -86,6 +88,7 @@ class CreateFieldRequest(BaseModel):
     description: str | None = None
     field_type: FieldType
     is_required: bool = False
+    important: bool = False
     is_repeated: bool = False
     is_object: bool = False
     is_array: bool = False
@@ -98,6 +101,7 @@ class UpdateFieldRequest(BaseModel):
     description: str | None = None
     field_type: FieldType | None = None
     is_required: bool | None = None
+    important: bool | None = None
     is_repeated: bool | None = None
     is_object: bool | None = None
     is_array: bool | None = None

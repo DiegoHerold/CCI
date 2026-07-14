@@ -44,6 +44,15 @@ class NormalizationReprocessRequest(ApiModel):
     reason: str | None = Field(default=None, max_length=512)
 
 
+class FieldCorrectionRequest(ApiModel):
+    raw_value: Any
+    reason: str | None = Field(default=None, max_length=512)
+
+
+class FieldReviewRequest(ApiModel):
+    reason: str | None = Field(default=None, max_length=512)
+
+
 class ExtractionResponse(ApiModel):
     extraction_job_id: str
     document_id: str

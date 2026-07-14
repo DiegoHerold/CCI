@@ -9,6 +9,9 @@ client = TestClient(app)
 EXPECTED_SERVICES = {
     "identity-service",
     "client-service",
+    "document-service",
+    "template-service",
+    "extraction-service",
     "conference-model-service",
     "schedule-service",
     "document-ingestion-service",

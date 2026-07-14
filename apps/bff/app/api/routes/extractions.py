@@ -180,6 +180,46 @@ async def list_extraction_field_evidence(
     return await _proxy(request, f"/extractions/fields/{field_value_id}/evidence", extraction_service, authorization)
 
 
+@router.patch("/extractions/fields/{field_value_id}/correction")
+async def correct_extraction_field(
+    field_value_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/fields/{field_value_id}/correction", extraction_service, authorization)
+
+
+@router.post("/extractions/fields/{field_value_id}/approve")
+async def approve_extraction_field(
+    field_value_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/fields/{field_value_id}/approve", extraction_service, authorization)
+
+
+@router.post("/extractions/fields/{field_value_id}/reject")
+async def reject_extraction_field(
+    field_value_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/fields/{field_value_id}/reject", extraction_service, authorization)
+
+
+@router.post("/extractions/results/{result_id}/approve")
+async def approve_extraction_result(
+    result_id: str,
+    request: Request,
+    extraction_service: Annotated[ExtractionServiceClient, Depends(get_extraction_service_client)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> JSONResponse:
+    return await _proxy(request, f"/extractions/results/{result_id}/approve", extraction_service, authorization)
+
+
 @router.post("/extractions/jobs/{job_id}/normalize/reprocess")
 async def reprocess_extraction_normalization(
     job_id: str,

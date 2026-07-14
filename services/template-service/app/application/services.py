@@ -186,6 +186,7 @@ class TemplateService:
             description=payload.description,
             field_type=payload.field_type.value,
             is_required=payload.is_required,
+            important=payload.important,
             is_repeated=payload.is_repeated,
             is_object=payload.is_object or payload.field_type.value == "object",
             is_array=payload.is_array or payload.field_type.value == "array" or "[]" in payload.field_path,
@@ -222,7 +223,7 @@ class TemplateService:
             field.label = payload.label
         if "description" in payload.model_fields_set:
             field.description = payload.description
-        for attr in ("is_required", "is_repeated", "is_object", "is_array", "order_index"):
+        for attr in ("is_required", "important", "is_repeated", "is_object", "is_array", "order_index"):
             value = getattr(payload, attr)
             if value is not None:
                 setattr(field, attr, value)
@@ -513,6 +514,7 @@ class TemplateService:
                     "description": item.description,
                     "field_type": item.field_type,
                     "is_required": item.is_required,
+                    "important": getattr(item, "important", False),
                     "is_repeated": item.is_repeated,
                     "is_object": item.is_object,
                     "is_array": item.is_array,
@@ -761,6 +763,7 @@ class TemplateService:
             description=payload.description,
             field_type=payload.field_type.value,
             is_required=payload.is_required,
+            important=payload.important,
             is_repeated=payload.is_repeated,
             is_object=payload.is_object,
             is_array=payload.is_array,
@@ -1148,6 +1151,7 @@ class TemplateService:
                     "description": field.description,
                     "field_type": field.field_type,
                     "is_required": field.is_required,
+                    "important": getattr(field, "important", False),
                     "is_repeated": field.is_repeated,
                     "is_object": field.is_object,
                     "is_array": field.is_array,

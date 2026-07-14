@@ -20,6 +20,7 @@
 - `fase-13-extraction-service.md`: jobs de extracao, Temporal preparado, status, retries, dispatch de workers e artefatos brutos.
 - `fase-14-extractor-workers-basicos.md`: workers PDF/Excel para extracao bruta por template, estrategias tecnicas e evidencias.
 - `fase-15-normalizacao-resultados-extracao.md`: normalizacao, resultados persistidos, evidencias, status e APIs de consulta.
+- `fase-16-fluxo-guiado-template-review.md`: fluxo guiado por documento, criacao guiada de template e revisao/correcao de variaveis extraidas.
 - `preparacao-infra-packages.md`: preparacao aditiva de infra, contracts, Compose, ambiente e operacao.
 - `recriar-infra-docker-local.md`: roteiro para reconstruir Docker local, schemas, buckets e servicos existentes.
 
@@ -55,7 +56,7 @@ Os servicos granulares antigos nao sao mais a divisao oficial. Quando existirem 
 14. Fase 13 - Extraction Service
 15. Fase 14 - Extractor Workers basicos
 16. Fase 15 - Normalizacao e Resultados da Extracao
-17. Fase 16 - Web Extraction Review
+17. Fase 16 - Fluxo Guiado, Template Builder e Web Extraction Review
 18. Fase 17 - Rule DSL
 19. Fase 18 - Web Rule Builder
 20. Fase 19 - Rule Service

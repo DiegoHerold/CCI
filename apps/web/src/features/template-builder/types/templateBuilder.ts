@@ -5,7 +5,22 @@ export type TemplateFileFormat = "PDF" | "XLSX" | "XLS" | "CSV" | "TXT" | "DOCX"
 export type TemplateStructureType = "text" | "table" | "hierarchical" | "form" | "mixed" | "unknown";
 export type TemplateStatus = "draft" | "active" | "inactive" | "archived";
 export type TemplateVersionStatus = "draft" | "published" | "archived";
-export type FieldType = "text" | "number" | "money" | "date" | "month" | "cnpj" | "cpf" | "boolean" | "object" | "array" | "table" | "calculated" | "unknown";
+export type FieldType =
+  | "text"
+  | "number"
+  | "money"
+  | "date"
+  | "month"
+  | "cnpj"
+  | "cpf"
+  | "boolean"
+  | "percentage"
+  | "account_code"
+  | "object"
+  | "array"
+  | "table"
+  | "calculated"
+  | "unknown";
 export type ExtractionStrategy =
   | "find_near_label"
   | "fixed_bbox"
@@ -47,6 +62,7 @@ export interface TemplateField {
   description?: string | null;
   fieldType: FieldType;
   isRequired: boolean;
+  important?: boolean;
   isRepeated: boolean;
   isObject: boolean;
   isArray: boolean;
@@ -104,6 +120,50 @@ export interface TemplateBuilderState {
   annotations: TemplateAnnotation[];
   extractionRules: ExtractionRule[];
   identificationSignals: IdentificationSignal[];
+}
+
+export interface TemplateSuggestionResponse {
+  documentId: string;
+  suggestedTemplate: {
+    name: string;
+    category: string;
+    fileFormat: TemplateFileFormat | string;
+    structureType: TemplateStructureType | string;
+  };
+  suggestedFields: Array<{
+    fieldPath: string;
+    label: string;
+    fieldType: FieldType;
+    important: boolean;
+    required: boolean;
+    rawSample?: unknown;
+    normalizedPreview?: string | null;
+    displayValue?: string | null;
+    confidence: number;
+  }>;
+  suggestedArrays: Array<{
+    fieldPath: string;
+    label: string;
+    itemFields: string[];
+    confidence: number;
+  }>;
+  suggestedRules: Array<{
+    fieldPath: string;
+    strategy: ExtractionStrategy;
+    config: Record<string, unknown>;
+    confidence: number;
+  }>;
+  warnings: string[];
+}
+
+export interface RulePreviewNormalizationResponse {
+  fieldPath: string;
+  rawValue?: unknown;
+  normalizedValue?: unknown;
+  displayValue?: string | null;
+  status: string;
+  confidence: number;
+  evidence: Record<string, unknown>;
 }
 
 export interface FieldTreeNode {

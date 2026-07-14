@@ -87,6 +87,7 @@ class FieldCreate(ApiModel):
     description: str | None = None
     field_type: FieldType
     is_required: bool = False
+    important: bool = False
     is_repeated: bool = False
     is_object: bool = False
     is_array: bool = False
@@ -99,6 +100,7 @@ class FieldUpdate(ApiModel):
     description: str | None = None
     field_type: FieldType | None = None
     is_required: bool | None = None
+    important: bool | None = None
     is_repeated: bool | None = None
     is_object: bool | None = None
     is_array: bool | None = None
@@ -114,6 +116,7 @@ class FieldResponse(ApiModel):
     description: str | None = None
     field_type: FieldType
     is_required: bool
+    important: bool = False
     is_repeated: bool
     is_object: bool
     is_array: bool
@@ -133,6 +136,7 @@ class FieldResponse(ApiModel):
             description=entity.description,
             field_type=FieldType(entity.field_type),
             is_required=entity.is_required,
+            important=getattr(entity, "important", False),
             is_repeated=entity.is_repeated,
             is_object=entity.is_object,
             is_array=entity.is_array,
@@ -522,6 +526,7 @@ class FieldCreate(ApiModel):
     description: str | None = Field(default=None, max_length=4096)
     field_type: FieldType
     is_required: bool = False
+    important: bool = False
     is_repeated: bool = False
     is_object: bool = False
     is_array: bool = False
@@ -542,6 +547,7 @@ class FieldUpdate(ApiModel):
     description: str | None = Field(default=None, max_length=4096)
     field_type: FieldType | None = None
     is_required: bool | None = None
+    important: bool | None = None
     is_repeated: bool | None = None
     is_object: bool | None = None
     is_array: bool | None = None
@@ -557,6 +563,7 @@ class FieldResponse(ApiModel):
     description: str | None = None
     field_type: FieldType
     is_required: bool
+    important: bool = False
     is_repeated: bool
     is_object: bool
     is_array: bool
@@ -576,6 +583,7 @@ class FieldResponse(ApiModel):
             description=entity.description,
             field_type=FieldType(entity.field_type),
             is_required=entity.is_required,
+            important=getattr(entity, "important", False),
             is_repeated=entity.is_repeated,
             is_object=entity.is_object,
             is_array=entity.is_array,
@@ -931,3 +939,62 @@ class TemplateBuilderStateResponse(ApiModel):
     annotations: list[AnnotationResponse] = Field(default_factory=list)
     extraction_rules: list[ExtractionRuleResponse] = Field(default_factory=list)
     identification_signals: list[IdentificationSignalResponse] = Field(default_factory=list)
+
+
+class SuggestedTemplateResponse(ApiModel):
+    name: str
+    category: str
+    file_format: str
+    structure_type: str = "unknown"
+
+
+class SuggestedFieldResponse(ApiModel):
+    field_path: str
+    label: str
+    field_type: FieldType
+    important: bool = False
+    required: bool = False
+    raw_sample: Any = None
+    normalized_preview: str | None = None
+    display_value: str | None = None
+    confidence: float = 0.0
+
+
+class SuggestedArrayResponse(ApiModel):
+    field_path: str
+    label: str
+    item_fields: list[str] = Field(default_factory=list)
+    confidence: float = 0.0
+
+
+class SuggestedRuleResponse(ApiModel):
+    field_path: str
+    strategy: ExtractionStrategy
+    config: dict[str, Any] = Field(default_factory=dict)
+    confidence: float = 0.0
+
+
+class TemplateSuggestionResponse(ApiModel):
+    document_id: str
+    suggested_template: SuggestedTemplateResponse
+    suggested_fields: list[SuggestedFieldResponse] = Field(default_factory=list)
+    suggested_arrays: list[SuggestedArrayResponse] = Field(default_factory=list)
+    suggested_rules: list[SuggestedRuleResponse] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class RulePreviewNormalizationRequest(ApiModel):
+    document_id: str = Field(min_length=1, max_length=36)
+    field_path: str = Field(min_length=1, max_length=512)
+    field_type: FieldType
+    rule: dict[str, Any] = Field(default_factory=dict)
+
+
+class RulePreviewNormalizationResponse(ApiModel):
+    field_path: str
+    raw_value: Any = None
+    normalized_value: Any = None
+    display_value: str | None = None
+    status: str
+    confidence: float = 0.0
+    evidence: dict[str, Any] = Field(default_factory=dict)

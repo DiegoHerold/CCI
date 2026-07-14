@@ -8,7 +8,23 @@ import type { FieldType } from "../types/templateBuilder";
 import { defaultLabelFromPath } from "../utils/fieldPath";
 import { CreateFieldQuickActions } from "./FieldTree";
 
-const FIELD_TYPES: FieldType[] = ["text", "number", "money", "date", "month", "cnpj", "cpf", "boolean", "object", "array", "table", "calculated", "unknown"];
+const FIELD_TYPES: FieldType[] = [
+  "text",
+  "number",
+  "money",
+  "date",
+  "month",
+  "cnpj",
+  "cpf",
+  "boolean",
+  "percentage",
+  "account_code",
+  "object",
+  "array",
+  "table",
+  "calculated",
+  "unknown",
+];
 
 export function FieldEditor({
   fieldPath,

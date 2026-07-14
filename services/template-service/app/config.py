@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     template_max_rule_config_kb: int = Field(default=128, gt=0, le=4096)
     template_match_min_confidence: float = Field(default=0.75, ge=0, le=1)
     template_match_auto_accept_confidence: float = Field(default=0.90, ge=0, le=1)
+    template_match_auto_confirm_threshold: float = Field(default=0.95, ge=0, le=1)
+    template_match_require_confirmation: bool = True
     template_match_ambiguity_delta: float = Field(default=0.08, ge=0, le=1)
     template_match_max_candidates: int = Field(default=10, ge=1, le=100)
     template_profile_text_sample_limit: int = Field(default=5000, ge=100, le=50000)

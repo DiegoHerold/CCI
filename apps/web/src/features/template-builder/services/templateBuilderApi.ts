@@ -3,16 +3,19 @@ import type { DocumentSelection } from "@/features/document-viewer/types/selecti
 import type {
   AnnotationWithRuleResponse,
   ExtractionStrategy,
+  ExtractionRule,
   FieldType,
   IdentificationSignal,
   TemplateAnnotation,
   TemplateBuilderState,
   TemplateCategory,
+  TemplateSuggestionResponse,
   TemplateField,
   TemplateFileFormat,
   TemplateSummary,
   TemplateVersion,
   TemplateStructureType,
+  RulePreviewNormalizationResponse,
 } from "../types/templateBuilder";
 
 function jsonBody(payload: unknown): RequestInit {
@@ -47,12 +50,24 @@ export const templateBuilderApi = {
     label: string;
     fieldType: FieldType;
     isRequired?: boolean;
+    important?: boolean;
     isRepeated?: boolean;
     isObject?: boolean;
     isArray?: boolean;
     orderIndex?: number;
   }) {
     return apiRequest<TemplateField>(`/templates/${templateId}/fields`, jsonBody(payload));
+  },
+
+  createExtractionRule(templateId: string, payload: {
+    fieldId: string;
+    ruleType?: string | null;
+    strategy: ExtractionStrategy;
+    config: Record<string, unknown>;
+    confidenceHint?: number | null;
+    createdFromAnnotationId?: string | null;
+  }) {
+    return apiRequest<ExtractionRule>(`/templates/${templateId}/extraction-rules`, jsonBody(payload));
   },
 
   deleteAnnotation(templateId: string, annotationId: string) {
@@ -96,5 +111,18 @@ export const templateBuilderApi = {
 
   listAnnotations(templateId: string) {
     return apiRequest<{ items: TemplateAnnotation[] }>(`/templates/${templateId}/annotations`);
+  },
+
+  suggestFromDocument(documentId: string) {
+    return apiRequest<TemplateSuggestionResponse>(`/templates/from-document/${documentId}/suggestions`, { method: "POST", body: JSON.stringify({}) });
+  },
+
+  previewNormalization(templateId: string, payload: {
+    documentId: string;
+    fieldPath: string;
+    fieldType: FieldType;
+    rule: Record<string, unknown>;
+  }) {
+    return apiRequest<RulePreviewNormalizationResponse>(`/templates/${templateId}/rules/preview-normalization`, jsonBody(payload));
   },
 };

@@ -13,6 +13,7 @@
     "description": {"type": ["string", "null"]},
     "field_type": {"type": "string", "enum": ["text", "number", "money", "date", "month", "cnpj", "cpf", "boolean", "percentage", "account_code", "object", "array", "table", "calculated", "unknown"]},
     "is_required": {"type": "boolean"},
+    "important": {"type": "boolean", "default": false},
     "is_repeated": {"type": "boolean"},
     "is_object": {"type": "boolean"},
     "is_array": {"type": "boolean"},

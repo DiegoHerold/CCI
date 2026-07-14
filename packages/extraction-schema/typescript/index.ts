@@ -30,3 +30,6 @@ export interface ExtractionResult { extraction_result_id?: string | null; job_id
 export interface NormalizationRun { normalization_run_id?: string | null; extraction_job_id: string; extraction_result_id?: string | null; status: NormalizationStatus; error_message?: string | null }
 export interface ExtractionResultSummary { extraction_result_id: string; extraction_job_id: string; document_id: string; status: ExtractionResultStatus | string; field_count: number; normalized_count: number; requires_review_count: number }
 export interface ExtractionResultDetail extends ExtractionResult { fields: ExtractedFieldValue[]; array_items: ExtractedArrayItem[] }
+export interface FieldCorrectionRequest { raw_value: unknown; reason?: string | null }
+export interface FieldReviewRequest { reason?: string | null }
+export interface ExtractedFieldReview { review_id?: string | null; extraction_result_id: string; field_value_id: string; action: string; previous_status: ExtractedFieldStatus | string; reason?: string | null; reviewed_by: string }

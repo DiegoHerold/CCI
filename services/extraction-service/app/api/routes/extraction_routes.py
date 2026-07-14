@@ -11,6 +11,8 @@ from app.application.schemas import (
     ExtractedObjectResponse,
     ExtractionEvidenceListResponse,
     ExtractionEvidenceResponse,
+    FieldCorrectionRequest,
+    FieldReviewRequest,
     ExtractionJobListResponse,
     ExtractionJobResponse,
     ExtractionResultSummaryResponse,
@@ -230,3 +232,61 @@ async def reprocess_job_normalization(
         payload.reason,
     )
     return ExtractionResultSummaryResponse.from_entity(result)
+
+
+@router.patch("/fields/{field_value_id}/correction", response_model=ExtractedFieldValueResponse)
+def correct_extracted_field(
+    field_value_id: str,
+    payload: FieldCorrectionRequest,
+    request: Request,
+    actor: CurrentPrincipal,
+    service: ExtractionServiceDep,
+) -> ExtractedFieldValueResponse:
+    return ExtractedFieldValueResponse.from_entity(
+        service.correct_field_value(
+            field_value_id,
+            payload.raw_value,
+            actor,
+            getattr(request.state, "correlation_id", "system"),
+            payload.reason,
+        )
+    )
+
+
+@router.post("/fields/{field_value_id}/approve", response_model=ExtractedFieldValueResponse)
+def approve_extracted_field(
+    field_value_id: str,
+    payload: FieldReviewRequest,
+    request: Request,
+    actor: CurrentPrincipal,
+    service: ExtractionServiceDep,
+) -> ExtractedFieldValueResponse:
+    return ExtractedFieldValueResponse.from_entity(
+        service.approve_field_value(field_value_id, actor, getattr(request.state, "correlation_id", "system"), payload.reason)
+    )
+
+
+@router.post("/fields/{field_value_id}/reject", response_model=ExtractedFieldValueResponse)
+def reject_extracted_field(
+    field_value_id: str,
+    payload: FieldReviewRequest,
+    request: Request,
+    actor: CurrentPrincipal,
+    service: ExtractionServiceDep,
+) -> ExtractedFieldValueResponse:
+    return ExtractedFieldValueResponse.from_entity(
+        service.reject_field_value(field_value_id, actor, getattr(request.state, "correlation_id", "system"), payload.reason)
+    )
+
+
+@router.post("/results/{result_id}/approve", response_model=ExtractionResultSummaryResponse)
+def approve_extraction_result(
+    result_id: str,
+    payload: FieldReviewRequest,
+    request: Request,
+    actor: CurrentPrincipal,
+    service: ExtractionServiceDep,
+) -> ExtractionResultSummaryResponse:
+    return ExtractionResultSummaryResponse.from_entity(
+        service.approve_result(result_id, actor, getattr(request.state, "correlation_id", "system"), payload.reason)
+    )

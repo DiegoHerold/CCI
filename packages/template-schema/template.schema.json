@@ -156,6 +156,71 @@
         "identification_signals": {"type": "array", "items": {"$ref": "#/$defs/IdentificationSignal"}}
       },
       "additionalProperties": false
+    },
+    "SuggestedTemplate": {
+      "type": "object",
+      "required": ["name", "category", "file_format", "structure_type"],
+      "properties": {
+        "name": {"type": "string"},
+        "category": {"type": "string"},
+        "file_format": {"type": "string"},
+        "structure_type": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "SuggestedField": {
+      "type": "object",
+      "required": ["field_path", "label", "field_type", "important", "required", "confidence"],
+      "properties": {
+        "field_path": {"type": "string"},
+        "label": {"type": "string"},
+        "field_type": {"type": "string"},
+        "important": {"type": "boolean"},
+        "required": {"type": "boolean"},
+        "raw_sample": {},
+        "normalized_preview": {"type": ["string", "null"]},
+        "display_value": {"type": ["string", "null"]},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "SuggestedRule": {
+      "type": "object",
+      "required": ["field_path", "strategy", "config", "confidence"],
+      "properties": {
+        "field_path": {"type": "string"},
+        "strategy": {"type": "string"},
+        "config": {"type": "object"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "TemplateSuggestion": {
+      "type": "object",
+      "required": ["document_id", "suggested_template", "suggested_fields", "suggested_arrays", "suggested_rules", "warnings"],
+      "properties": {
+        "document_id": {"type": "string"},
+        "suggested_template": {"$ref": "#/$defs/SuggestedTemplate"},
+        "suggested_fields": {"type": "array", "items": {"$ref": "#/$defs/SuggestedField"}},
+        "suggested_arrays": {"type": "array", "items": {"type": "object"}},
+        "suggested_rules": {"type": "array", "items": {"$ref": "#/$defs/SuggestedRule"}},
+        "warnings": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "RulePreviewNormalization": {
+      "type": "object",
+      "required": ["field_path", "status", "confidence", "evidence"],
+      "properties": {
+        "field_path": {"type": "string"},
+        "raw_value": {},
+        "normalized_value": {},
+        "display_value": {"type": ["string", "null"]},
+        "status": {"type": "string"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "evidence": {"type": "object"}
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

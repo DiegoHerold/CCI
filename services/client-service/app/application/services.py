@@ -19,9 +19,11 @@ from app.config import Settings
 from app.domain.cnpj import format_cnpj, normalize_cnpj
 from app.domain.enums import (
     AuditEventType,
+    ClientRole,
     ClientStatus,
     CompetencyStatus,
     LinkStatus,
+    ResponsibilityArea,
 )
 from app.domain.folders import resolve_competence_path
 from app.errors import (
@@ -160,8 +162,25 @@ class ClientService:
         )
         try:
             self.clients.add(client)
+            self.session.add(
+                ClientUser(
+                    client_id=client.id,
+                    user_id=actor.id,
+                    client_role=ClientRole.CLIENT_MANAGER.value,
+                    status=LinkStatus.ACTIVE.value,
+                    is_primary_responsible=True,
+                    responsibility_area=ResponsibilityArea.GENERAL.value,
+                )
+            )
             AuditService(self.session).record(
                 AuditEventType.CLIENT_CREATED, actor, context, client_id=client.id
+            )
+            AuditService(self.session).record(
+                AuditEventType.CLIENT_USER_LINKED,
+                actor,
+                context,
+                client_id=client.id,
+                metadata={"linkedUserId": actor.id, "automatic": True},
             )
             self.session.commit()
         except IntegrityError as exc:

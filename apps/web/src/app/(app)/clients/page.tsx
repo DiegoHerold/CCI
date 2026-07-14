@@ -17,6 +17,7 @@ import { RequirePermission } from "@/features/auth/require-permission";
 import { useAuth } from "@/features/auth/auth-provider";
 import { hasPermission } from "@/features/auth/permissions";
 import { ClientForm } from "@/features/clients/client-form";
+import { clientContextApi } from "@/lib/api/client-context-api";
 import { clientsApi } from "@/lib/api/clients-api";
 import { ApiError } from "@/lib/api/http-client";
 import { classifyApiError, friendlyErrorMessage } from "@/lib/api/error-utils";
@@ -85,9 +86,16 @@ function ClientsContent() {
     setFormError(null);
     setFormUnavailable(null);
     try {
-      await clientsApi.create(payload);
+      const created = await clientsApi.create(payload);
       setDrawerOpen(false);
-      setSuccessMessage(`Cliente "${payload.name}" cadastrado com sucesso.`);
+      try {
+        await clientContextApi.updatePreference(created.id);
+        window.dispatchEvent(new Event("cci:operational-context-refresh"));
+        setSuccessMessage(`Cliente "${payload.name}" cadastrado com sucesso e selecionado.`);
+      } catch {
+        window.dispatchEvent(new Event("cci:operational-context-refresh"));
+        setSuccessMessage(`Cliente "${payload.name}" cadastrado com sucesso. Selecione-o no topo para operar.`);
+      }
       await load(search);
     } catch (error) {
       const code = classifyApiError(error);

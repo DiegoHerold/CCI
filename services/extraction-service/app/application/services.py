@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.application.schemas import ExtractionReprocessRequest, ExtractionRequest
 from app.config import Settings
 from app.domain.enums import (
+    ExtractedFieldStatus,
     ExtractionArtifactType,
     ExtractionAttemptStatus,
     ExtractionJobStatus,
@@ -21,6 +22,7 @@ from app.infrastructure.messaging.events import DomainEvent, EventPublisher
 from app.infrastructure.storage.artifact_storage import ArtifactStorage
 from app.infrastructure.temporal.client import TemporalClient
 from app.infrastructure.worker_dispatch import WorkerDispatcher
+from app.modules.normalization.normalizers import ValueNormalizer
 from app.modules.results.service import ExtractionResultService
 
 
@@ -46,6 +48,7 @@ class ExtractionService:
         self.publisher = publisher
         self.jobs = ExtractionJobRepository(session)
         self.results = ExtractionResultService(session, settings)
+        self.normalizer = ValueNormalizer()
 
     async def request_extraction_for_document(
         self,
@@ -334,6 +337,86 @@ class ExtractionService:
         self.results.repository.get_field_any_result(field_value_id)
         return self.results.repository.list_evidence_for_field(field_value_id)
 
+    def correct_field_value(self, field_value_id: str, raw_value: Any, actor: Principal, correlation_id: str, reason: str | None = None):
+        actor.require_permission("documents:read")
+        field = self.results.repository.get_field_any_result(field_value_id)
+        normalized = self.normalizer.normalize(raw_value, field.field_type)
+        status = ExtractedFieldStatus.CORRECTED if normalized.success else ExtractedFieldStatus.REQUIRES_REVIEW
+        review = self.results.repository.record_field_review(
+            field,
+            action="correct",
+            reviewed_by=actor.id,
+            reason=reason,
+            new_raw_value=raw_value,
+            new_normalized_value=str(normalized.normalized_value) if normalized.normalized_value is not None else None,
+            new_display_value=normalized.display_value,
+            new_normalized_json={
+                "value": normalized.normalized_value,
+                "display_value": normalized.display_value,
+                "status": "valid" if normalized.success else "invalid",
+            },
+            new_metadata_json=normalized.metadata | ({"error_code": normalized.error_code} if normalized.error_code else {}),
+            new_status=status.value,
+        )
+        self.session.commit()
+        self._publish_field_review("ExtractionFieldCorrected", field, correlation_id, actor.id, review.id, reason)
+        return self.results.repository.get_field_any_result(field_value_id)
+
+    def approve_field_value(self, field_value_id: str, actor: Principal, correlation_id: str, reason: str | None = None):
+        actor.require_permission("documents:read")
+        field = self.results.repository.get_field_any_result(field_value_id)
+        review = self.results.repository.record_field_review(
+            field,
+            action="approve",
+            reviewed_by=actor.id,
+            reason=reason,
+            new_raw_value=field.raw_value,
+            new_normalized_value=field.normalized_value,
+            new_display_value=field.display_value,
+            new_normalized_json=field.normalized_json,
+            new_status=ExtractedFieldStatus.APPROVED.value,
+        )
+        self.session.commit()
+        self._publish_field_review("ExtractionFieldApproved", field, correlation_id, actor.id, review.id, reason)
+        return self.results.repository.get_field_any_result(field_value_id)
+
+    def reject_field_value(self, field_value_id: str, actor: Principal, correlation_id: str, reason: str | None = None):
+        actor.require_permission("documents:read")
+        field = self.results.repository.get_field_any_result(field_value_id)
+        review = self.results.repository.record_field_review(
+            field,
+            action="reject",
+            reviewed_by=actor.id,
+            reason=reason,
+            new_raw_value=field.raw_value,
+            new_normalized_value=field.normalized_value,
+            new_display_value=field.display_value,
+            new_normalized_json=field.normalized_json,
+            new_status=ExtractedFieldStatus.REJECTED.value,
+        )
+        self.session.commit()
+        self._publish_field_review("ExtractionFieldRejected", field, correlation_id, actor.id, review.id, reason)
+        return self.results.repository.get_field_any_result(field_value_id)
+
+    def approve_result(self, result_id: str, actor: Principal, correlation_id: str, reason: str | None = None):
+        actor.require_permission("documents:read")
+        result = self.results.repository.get_result(result_id)
+        for field in self.results.repository.list_fields(result_id, requires_review=True):
+            self.results.repository.record_field_review(
+                field,
+                action="approve",
+                reviewed_by=actor.id,
+                reason=reason,
+                new_raw_value=field.raw_value,
+                new_normalized_value=field.normalized_value,
+                new_display_value=field.display_value,
+                new_normalized_json=field.normalized_json,
+                new_status=ExtractedFieldStatus.APPROVED.value,
+            )
+        self.session.commit()
+        self._publish("ExtractionResultApproved", result.job, correlation_id, extra={"extraction_result_id": result.id, "reason": reason, "reviewed_by": actor.id})
+        return self.results.repository.get_result(result_id)
+
     async def reprocess_normalization(self, job_id: str, actor: Principal, correlation_id: str, reason: str | None = None):
         actor.require_permission("documents:read")
         job = self.jobs.get(job_id)
@@ -595,4 +678,28 @@ class ExtractionService:
                 competence_id=job.competence_id,
                 document_id=job.document_id,
             )
+        )
+
+    def _publish_field_review(
+        self,
+        event_type: str,
+        field: Any,
+        correlation_id: str,
+        actor_id: str,
+        review_id: str,
+        reason: str | None,
+    ) -> None:
+        result = self.results.repository.get_result(field.extraction_result_id)
+        self._publish(
+            event_type,
+            result.job,
+            correlation_id,
+            extra={
+                "extraction_result_id": result.id,
+                "field_value_id": field.id,
+                "field_path": field.field_path,
+                "review_id": review_id,
+                "reviewed_by": actor_id,
+                "reason": reason,
+            },
         )
