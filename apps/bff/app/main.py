@@ -5,6 +5,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.clients import router as clients_router
 from app.api.routes.documents import router as documents_router
 from app.api.routes.executions import router as executions_router
+from app.api.routes.extractions import router as extractions_router
 from app.api.routes.health import router as health_router
 from app.api.routes.logs import router as logs_router
 from app.api.routes.platform import router as platform_router
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
     application.include_router(users_router)
     application.include_router(clients_router)
     application.include_router(template_matching_router)
+    application.include_router(extractions_router)
     application.include_router(documents_router)
     application.include_router(templates_router)
     application.include_router(executions_router)

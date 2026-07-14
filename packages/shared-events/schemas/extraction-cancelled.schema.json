@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/extraction-cancelled.schema.json",
+  "title": "ExtractionCancelled",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "ExtractionCancelled" },
+        "payload": { "$ref": "extraction-requested.schema.json#/$defs/ExtractionPayload" }
+      }
+    }
+  ]
+}

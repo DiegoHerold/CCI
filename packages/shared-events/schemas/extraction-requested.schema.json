@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/extraction-requested.schema.json",
+  "title": "ExtractionRequested",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "ExtractionRequested" },
+        "payload": { "$ref": "#/$defs/ExtractionPayload" }
+      }
+    }
+  ],
+  "$defs": {
+    "ExtractionPayload": {
+      "type": "object",
+      "required": ["extraction_job_id", "document_id", "client_id", "competence_id", "template_id", "template_version_id"],
+      "properties": {
+        "extraction_job_id": { "type": "string" },
+        "document_id": { "type": "string" },
+        "client_id": { "type": "string" },
+        "competence_id": { "type": "string" },
+        "template_id": { "type": "string" },
+        "template_version_id": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

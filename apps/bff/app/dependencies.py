@@ -7,6 +7,7 @@ from app.infrastructure.clients.document_classification_client import DocumentCl
 from app.infrastructure.clients.document_service_client import DocumentServiceClient
 from app.infrastructure.clients.document_ingestion_client import DocumentIngestionClient
 from app.infrastructure.clients.execution_control_client import ExecutionControlClient
+from app.infrastructure.clients.extraction_service_client import ExtractionServiceClient
 from app.infrastructure.clients.identity_client import IdentityClient
 from app.infrastructure.clients.log_service_client import LogServiceClient
 from app.infrastructure.clients.report_service_client import ReportServiceClient
@@ -37,6 +38,10 @@ def get_template_service_client() -> TemplateServiceClient:
     return TemplateServiceClient(get_settings().template_service_url)
 
 
+def get_extraction_service_client() -> ExtractionServiceClient:
+    return ExtractionServiceClient(get_settings().extraction_service_url)
+
+
 def get_internal_clients() -> dict[str, BaseInternalClient]:
     settings = get_settings()
     clients: list[BaseInternalClient] = [
@@ -44,6 +49,7 @@ def get_internal_clients() -> dict[str, BaseInternalClient]:
         ClientServiceClient(settings.client_service_url),
         DocumentServiceClient(settings.document_service_url),
         TemplateServiceClient(settings.template_service_url),
+        ExtractionServiceClient(settings.extraction_service_url),
         ConferenceModelClient(settings.conference_model_service_url),
         ScheduleServiceClient(settings.schedule_service_url),
         DocumentIngestionClient(settings.document_ingestion_service_url),

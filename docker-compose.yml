@@ -46,11 +46,12 @@ services:
     image: redis:7-alpine
     container_name: cci-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: redis-server /usr/local/etc/redis/redis.conf
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -71,6 +72,8 @@ services:
       - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 15s
@@ -111,22 +114,13 @@ services:
     environment:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-cci_minio}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-cci_minio_password}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_BUCKETS_FILE: /config/buckets.txt
+    volumes:
+      - ./infra/scripts/create-minio-buckets.sh:/scripts/create-minio-buckets.sh:ro
+      - ./infra/minio/buckets/buckets.txt:/config/buckets.txt:ro
     entrypoint: /bin/sh
-    command:
-      - -c
-      - |
-        until mc alias set local http://minio:9000 "$${MINIO_ACCESS_KEY}" "$${MINIO_SECRET_KEY}"; do
-          sleep 2
-        done
-        mc mb --ignore-existing local/raw-documents
-        mc mb --ignore-existing local/processed-documents
-        mc mb --ignore-existing local/reports
-        mc mb --ignore-existing local/evidences
-        mc mb --ignore-existing local/$${MINIO_BUCKET_DOCUMENTS_ORIGINAL:-cci-documents-original}
-        mc mb --ignore-existing local/$${MINIO_BUCKET_DOCUMENTS_PREVIEW:-cci-documents-preview}
-        mc mb --ignore-existing local/$${MINIO_BUCKET_EXTRACTION_ARTIFACTS:-cci-extraction-artifacts}
-        mc mb --ignore-existing local/$${MINIO_BUCKET_REPORTS:-cci-reports}
-        mc mb --ignore-existing local/$${MINIO_BUCKET_TEMP:-cci-temp}
+    command: ["-c", "until /scripts/create-minio-buckets.sh; do sleep 2; done"]
     restart: "no"
     networks:
       - cci-network
@@ -146,8 +140,11 @@ services:
       POSTGRES_SEEDS: ${TEMPORAL_POSTGRES_HOST:-temporal-postgres}
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_CLI_ADDRESS: temporal:7233
+      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development.yaml
     ports:
       - "7233:7233"
+    volumes:
+      - ./infra/temporal/dynamicconfig:/etc/temporal/config/dynamicconfig:ro
     networks:
       - cci-network
 
@@ -342,6 +339,69 @@ services:
     networks:
       - cci-network
 
+  extraction-service:
+    build:
+      context: ./services/extraction-service
+    container_name: cci-extraction-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: extraction-service
+      PORT: ${EXTRACTION_SERVICE_PORT:-8130}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cci}:${POSTGRES_PASSWORD:-cci_password}@postgres-app:5432/${POSTGRES_DB:-cci_platform}
+      EXTRACTION_DATABASE_SCHEMA: ${EXTRACTION_DATABASE_SCHEMA:-extraction}
+      IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8101}
+      IDENTITY_TIMEOUT_SECONDS: ${IDENTITY_TIMEOUT_SECONDS:-5}
+      DOCUMENT_SERVICE_URL: ${DOCUMENT_SERVICE_URL:-http://document-service:8110}
+      DOCUMENT_SERVICE_TIMEOUT_SECONDS: ${DOCUMENT_SERVICE_TIMEOUT_SECONDS:-5}
+      TEMPLATE_SERVICE_URL: ${TEMPLATE_SERVICE_URL:-http://template-service:8120}
+      TEMPLATE_SERVICE_TIMEOUT_SECONDS: ${TEMPLATE_SERVICE_TIMEOUT_SECONDS:-5}
+      TEMPORAL_ADDRESS: ${TEMPORAL_ADDRESS:-temporal:7233}
+      TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE:-default}
+      EXTRACTION_TASK_QUEUE: ${EXTRACTION_TASK_QUEUE:-extraction-task-queue}
+      EXTRACTION_MAX_ATTEMPTS: ${EXTRACTION_MAX_ATTEMPTS:-3}
+      EXTRACTION_RETRY_INITIAL_INTERVAL_SECONDS: ${EXTRACTION_RETRY_INITIAL_INTERVAL_SECONDS:-5}
+      EXTRACTION_RETRY_BACKOFF_COEFFICIENT: ${EXTRACTION_RETRY_BACKOFF_COEFFICIENT:-2}
+      EXTRACTION_RETRY_MAX_INTERVAL_SECONDS: ${EXTRACTION_RETRY_MAX_INTERVAL_SECONDS:-60}
+      EXTRACTION_WORKFLOW_TIMEOUT_SECONDS: ${EXTRACTION_WORKFLOW_TIMEOUT_SECONDS:-900}
+      EXTRACTION_ACTIVITY_TIMEOUT_SECONDS: ${EXTRACTION_ACTIVITY_TIMEOUT_SECONDS:-300}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-cci_minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-cci_minio_password}
+      MINIO_BUCKET_EXTRACTION_ARTIFACTS: ${MINIO_BUCKET_EXTRACTION_ARTIFACTS:-cci-extraction-artifacts}
+      PDF_EXTRACTOR_WORKER_TASK_QUEUE: ${PDF_EXTRACTOR_WORKER_TASK_QUEUE:-pdf-extractor-task-queue}
+      EXCEL_EXTRACTOR_WORKER_TASK_QUEUE: ${EXCEL_EXTRACTOR_WORKER_TASK_QUEUE:-excel-extractor-task-queue}
+    depends_on:
+      postgres-app:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+      document-service:
+        condition: service_healthy
+      template-service:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+      temporal:
+        condition: service_started
+    ports:
+      - "${EXTRACTION_SERVICE_PORT:-8130}:8130"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8130/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
   parser-worker:
     build:
       context: ./workers/parser-worker
@@ -393,6 +453,7 @@ services:
       CLIENT_SERVICE_URL: ${CLIENT_SERVICE_URL:-http://client-service:8102}
       DOCUMENT_SERVICE_URL: ${DOCUMENT_SERVICE_URL:-http://document-service:8110}
       TEMPLATE_SERVICE_URL: ${TEMPLATE_SERVICE_URL:-http://template-service:8120}
+      EXTRACTION_SERVICE_URL: ${EXTRACTION_SERVICE_URL:-http://extraction-service:8130}
       CONFERENCE_MODEL_SERVICE_URL: ${CONFERENCE_MODEL_SERVICE_URL:-http://conference-model-service:8103}
       SCHEDULE_SERVICE_URL: ${SCHEDULE_SERVICE_URL:-http://schedule-service:8104}
       DOCUMENT_INGESTION_SERVICE_URL: ${DOCUMENT_INGESTION_SERVICE_URL:-http://document-ingestion-service:8110}
@@ -416,6 +477,8 @@ services:
         condition: service_healthy
       template-service:
         condition: service_healthy
+      extraction-service:
+        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -426,6 +489,43 @@ services:
         condition: service_started
     ports:
       - "8000:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
+  web-app:
+    build:
+      context: ./apps/web
+    container_name: cci-web-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_BFF_URL: ${NEXT_PUBLIC_BFF_URL:-http://localhost:8000/api/v1}
+      PORT: 3000
+    depends_on:
+      bff:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://localhost:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - cci-network
 
@@ -546,6 +646,48 @@ services:
       TEMPLATE_PROFILE_MAX_KEYWORDS: 200
     depends_on:
       postgres-template-test:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && pytest -q"
+    networks:
+      - cci-network
+
+  postgres-extraction-test:
+    image: postgres:16
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: cci_extraction_test
+      POSTGRES_USER: cci_test
+      POSTGRES_PASSWORD: cci_test_password
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cci_test -d cci_extraction_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    networks:
+      - cci-network
+
+  extraction-service-test:
+    build:
+      context: ./services/extraction-service
+    profiles: ["test"]
+    environment:
+      APP_ENV: test
+      SERVICE_NAME: extraction-service
+      DATABASE_URL: postgresql+psycopg://cci_test:cci_test_password@postgres-extraction-test:5432/cci_extraction_test
+      IDENTITY_SERVICE_URL: http://identity-service:8101
+      DOCUMENT_SERVICE_URL: http://document-service:8110
+      TEMPLATE_SERVICE_URL: http://template-service:8120
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: default
+      EXTRACTION_DATABASE_SCHEMA: extraction
+      EXTRACTION_MAX_ATTEMPTS: 3
+      MINIO_BUCKET_EXTRACTION_ARTIFACTS: cci-extraction-artifacts
+      PDF_EXTRACTOR_WORKER_TASK_QUEUE: pdf-extractor-task-queue
+      EXCEL_EXTRACTOR_WORKER_TASK_QUEUE: excel-extractor-task-queue
+    depends_on:
+      postgres-extraction-test:
         condition: service_healthy
     command: sh -c "alembic upgrade head && pytest -q"
     networks:

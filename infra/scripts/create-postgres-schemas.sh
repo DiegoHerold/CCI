@@ -2,6 +2,7 @@
 set -eu
 
 compose="${COMPOSE_COMMAND:-docker compose}"
+$compose up -d postgres-app >/dev/null
 $compose exec -T postgres-app psql \
   -v ON_ERROR_STOP=1 \
   -U "${POSTGRES_USER:-cci}" \

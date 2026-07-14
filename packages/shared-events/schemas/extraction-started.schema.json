@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/extraction-started.schema.json",
+  "title": "ExtractionStarted",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "ExtractionStarted" },
+        "payload": { "$ref": "extraction-requested.schema.json#/$defs/ExtractionPayload" }
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-required="postgres-app redis rabbitmq minio temporal"
+required="postgres-app redis rabbitmq minio temporal temporal-ui"
 failed=0
 
 for service in $required; do

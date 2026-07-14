@@ -1,7 +1,7 @@
-.PHONY: up down restart logs ps build migrate seed test lint format reset clean infra-up infra-down infra-check create-buckets create-schemas packages-test postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health document-logs document-shell document-migrate document-test document-health template-logs template-shell template-migrate template-test template-matching-test template-health parser-logs parser-shell parser-test parser-health bff-logs bff-shell bff-test bff-health
+.PHONY: up down restart logs ps build migrate seed test lint format reset reset-local clean infra-up infra-down infra-check create-buckets create-schemas packages-test postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health document-logs document-shell document-migrate document-test document-health template-logs template-shell template-migrate template-test template-matching-test template-health extraction-logs extraction-shell extraction-migrate extraction-test extraction-health parser-logs parser-shell parser-test parser-health bff-logs bff-shell bff-test bff-health
 
 up:
-	docker compose up -d
+	docker compose up -d --build
 
 down:
 	docker compose down
@@ -19,14 +19,14 @@ ps:
 build:
 	docker compose build
 
-migrate: identity-migrate client-migrate document-migrate template-migrate
+migrate: identity-migrate client-migrate document-migrate template-migrate extraction-migrate
 
 seed: identity-seed
 
 packages-test:
 	pytest packages
 
-test: packages-test identity-test client-test document-test template-test parser-test bff-test
+test: packages-test identity-test client-test document-test template-test extraction-test parser-test bff-test
 
 lint:
 	docker compose config > /dev/null
@@ -36,25 +36,28 @@ format:
 	cd apps/web && npm run lint -- --fix
 
 reset:
-	sh infra/scripts/reset-local-env.sh
+	powershell -NoProfile -ExecutionPolicy Bypass -File infra/scripts/reset-local-env.ps1
+
+reset-local:
+	powershell -NoProfile -ExecutionPolicy Bypass -File infra/scripts/reset-local-env.ps1
 
 clean:
-	sh infra/scripts/reset-local-env.sh
+	powershell -NoProfile -ExecutionPolicy Bypass -File infra/scripts/reset-local-env.ps1
 
 infra-up:
-	docker compose up -d
+	docker compose up -d postgres-app redis rabbitmq minio minio-setup temporal-postgres temporal temporal-ui
 
 infra-down:
-	docker compose down
+	docker compose stop postgres-app redis rabbitmq minio minio-setup temporal-postgres temporal temporal-ui
 
 infra-check:
-	sh infra/scripts/check-infra.sh
+	powershell -NoProfile -ExecutionPolicy Bypass -File infra/scripts/check-infra.ps1
 
 create-buckets:
 	docker compose run --rm minio-setup
 
 create-schemas:
-	sh infra/scripts/create-postgres-schemas.sh
+	powershell -NoProfile -ExecutionPolicy Bypass -File infra/scripts/create-postgres-schemas.ps1
 
 postgres-shell:
 	docker compose exec postgres-app psql -U cci -d cci_platform
@@ -140,6 +143,22 @@ template-matching-test:
 template-health:
 	curl -fsS http://localhost:8120/health
 	curl -fsS http://localhost:8120/ready
+
+extraction-logs:
+	docker compose logs -f extraction-service
+
+extraction-shell:
+	docker compose exec extraction-service sh
+
+extraction-migrate:
+	docker compose run --rm extraction-service alembic upgrade head
+
+extraction-test:
+	docker compose --profile test run --rm extraction-service-test
+
+extraction-health:
+	curl -fsS http://localhost:8130/health
+	curl -fsS http://localhost:8130/ready
 
 parser-logs:
 	docker compose logs -f parser-worker

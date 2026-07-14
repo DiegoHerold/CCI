@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/events/extraction-retry-scheduled.schema.json",
+  "title": "ExtractionRetryScheduled",
+  "allOf": [
+    { "$ref": "event-envelope.schema.json" },
+    {
+      "properties": {
+        "event_type": { "const": "ExtractionRetryScheduled" },
+        "payload": { "$ref": "extraction-requested.schema.json#/$defs/ExtractionPayload" }
+      }
+    }
+  ]
+}

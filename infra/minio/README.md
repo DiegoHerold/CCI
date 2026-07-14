@@ -1,7 +1,13 @@
 # MinIO
 
-Storage local compatível com S3. `buckets/buckets.txt` é a lista canônica e `infra/scripts/create-minio-buckets.sh` cria os buckets de forma idempotente.
+Storage local compativel com S3. `buckets/buckets.txt` e a lista canonica e `infra/scripts/create-minio-buckets.sh` cria os buckets de forma idempotente.
 
-Os buckets alvo são `cci-documents-original`, `cci-documents-preview`, `cci-extraction-artifacts`, `cci-reports` e `cci-temp`. O Compose também preserva os buckets históricos durante a migração para não quebrar componentes já entregues.
+Buckets:
 
-Policies de produção devem usar menor privilégio e separar leitura, escrita e administração por serviço. Nenhuma credencial local deve ser reutilizada fora de desenvolvimento.
+- `cci-documents-original`
+- `cci-documents-preview`
+- `cci-extraction-artifacts`
+- `cci-reports`
+- `cci-temp`
+
+Policies de producao devem usar menor privilegio e separar leitura, escrita e administracao por servico. Credenciais locais nao devem ser reutilizadas fora de desenvolvimento.

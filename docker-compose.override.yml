@@ -5,6 +5,8 @@ services:
     image: nginx:1.27-alpine
     profiles: ["gateway"]
     depends_on:
+      web-app:
+        condition: service_healthy
       bff:
         condition: service_healthy
     ports:

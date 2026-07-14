@@ -1,5 +1,11 @@
 # Gateway
 
-Nginx de referência para desenvolvimento local. O BFF é a única entrada de negócio da Web; serviços internos não devem ser publicados diretamente em produção.
+Nginx de referencia para desenvolvimento local. O BFF continua sendo a entrada de negocio da Web; servicos internos nao devem ser expostos diretamente em producao.
 
-Roteamento planejado: `/web` para a Web App, `/api` para o BFF e, somente em desenvolvimento, `/minio`, `/rabbitmq` e `/temporal` para consoles administrativos. O perfil opcional `gateway` do Compose ativa esta base; as rotas de componentes ainda ausentes permanecem comentadas.
+Rotas locais:
+
+- `/` e `/web`: Web App.
+- `/api`: BFF.
+- `/health`: healthcheck simples do gateway.
+
+Consoles administrativos de MinIO, RabbitMQ e Temporal continuam acessiveis por suas portas locais e devem ser revisados antes de qualquer exposicao por gateway.

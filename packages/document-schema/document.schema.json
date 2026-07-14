@@ -22,7 +22,7 @@
     },
     "status": {
       "type": "string",
-      "enum": ["imported", "classified", "template_matched", "template_not_found", "template_ambiguous", "ambiguous", "missing", "confirmed", "rejected", "extracted", "error"]
+      "enum": ["imported", "classified", "template_matched", "template_not_found", "template_ambiguous", "ambiguous", "missing", "confirmed", "rejected", "extraction_pending", "extraction_running", "extracted", "extraction_failed", "error"]
     },
     "classification_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
     "created_at": { "type": "string", "format": "date-time" },

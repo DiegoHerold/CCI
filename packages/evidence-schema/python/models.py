@@ -31,3 +31,30 @@ class Evidence(BaseModel):
     source_text: str | None = None
     confidence: float = Field(ge=0, le=1)
     source: PdfEvidence | ExcelEvidence
+
+
+class SourceReference(BaseModel):
+    document_id: str
+    preview_id: str | None = None
+    storage_bucket: str | None = None
+    storage_key: str | None = None
+    page: int | None = Field(default=None, ge=1)
+    sheet: str | None = None
+    cell_range: str | None = None
+    bbox: BoundingBox | None = None
+
+
+class TemplateRuleReference(BaseModel):
+    template_id: str
+    template_version_id: str
+    field_id: str | None = None
+    extraction_rule_id: str | None = None
+
+
+class RawExtractionEvidence(BaseModel):
+    evidence_id: str
+    extraction_job_id: str
+    source: SourceReference
+    template_rule: TemplateRuleReference | None = None
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    raw_text: str | None = None

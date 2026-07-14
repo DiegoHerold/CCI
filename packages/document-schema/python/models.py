@@ -27,7 +27,10 @@ class DocumentStatus(str, Enum):
     MISSING = "missing"
     CONFIRMED = "confirmed"
     REJECTED = "rejected"
+    EXTRACTION_PENDING = "extraction_pending"
+    EXTRACTION_RUNNING = "extraction_running"
     EXTRACTED = "extracted"
+    EXTRACTION_FAILED = "extraction_failed"
     ERROR = "error"
 
 
