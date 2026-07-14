@@ -158,7 +158,13 @@ def fakes() -> dict[str, Any]:
         "document": FakeDocumentService(),
         "template": FakeTemplateService(),
         "temporal": FakeTemporalClient(),
-        "dispatcher": FakeDispatcher(settings.pdf_extractor_worker_task_queue, settings.excel_extractor_worker_task_queue),
+        "dispatcher": FakeDispatcher(
+            pdf_task_queue=settings.pdf_extractor_worker_task_queue,
+            excel_task_queue=settings.excel_extractor_worker_task_queue,
+            pdf_worker_url=settings.pdf_extractor_worker_url,
+            excel_worker_url=settings.excel_extractor_worker_url,
+            timeout_seconds=settings.extractor_worker_timeout_seconds,
+        ),
         "storage": FakeArtifactStorage(),
         "publisher": FakeEventPublisher(),
     }

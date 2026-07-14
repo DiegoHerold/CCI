@@ -1,4 +1,4 @@
-.PHONY: up down restart logs ps build migrate seed test lint format reset reset-local clean infra-up infra-down infra-check create-buckets create-schemas packages-test postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health document-logs document-shell document-migrate document-test document-health template-logs template-shell template-migrate template-test template-matching-test template-health extraction-logs extraction-shell extraction-migrate extraction-test extraction-health parser-logs parser-shell parser-test parser-health bff-logs bff-shell bff-test bff-health
+.PHONY: up down restart logs ps build migrate seed test lint format reset reset-local clean infra-up infra-down infra-check create-buckets create-schemas packages-test postgres-shell redis-cli rabbitmq-logs minio-logs temporal-logs identity-logs identity-shell identity-migrate identity-seed identity-test identity-health client-logs client-shell client-migrate client-test client-health document-logs document-shell document-migrate document-test document-health template-logs template-shell template-migrate template-test template-matching-test template-health extraction-logs extraction-shell extraction-migrate extraction-test extraction-health parser-logs parser-shell parser-test parser-health pdf-extractor-logs pdf-extractor-shell pdf-extractor-test pdf-extractor-health excel-extractor-logs excel-extractor-shell excel-extractor-test excel-extractor-health bff-logs bff-shell bff-test bff-health
 
 up:
 	docker compose up -d --build
@@ -26,7 +26,7 @@ seed: identity-seed
 packages-test:
 	pytest packages
 
-test: packages-test identity-test client-test document-test template-test extraction-test parser-test bff-test
+test: packages-test identity-test client-test document-test template-test extraction-test parser-test pdf-extractor-test excel-extractor-test bff-test
 
 lint:
 	docker compose config > /dev/null
@@ -172,6 +172,32 @@ parser-test:
 parser-health:
 	curl -fsS http://localhost:8121/health
 	curl -fsS http://localhost:8121/ready
+
+pdf-extractor-logs:
+	docker compose logs -f pdf-extractor-worker
+
+pdf-extractor-shell:
+	docker compose exec pdf-extractor-worker sh
+
+pdf-extractor-test:
+	docker compose --profile test run --rm pdf-extractor-worker-test
+
+pdf-extractor-health:
+	curl -fsS http://localhost:8131/health
+	curl -fsS http://localhost:8131/ready
+
+excel-extractor-logs:
+	docker compose logs -f excel-extractor-worker
+
+excel-extractor-shell:
+	docker compose exec excel-extractor-worker sh
+
+excel-extractor-test:
+	docker compose --profile test run --rm excel-extractor-worker-test
+
+excel-extractor-health:
+	curl -fsS http://localhost:8132/health
+	curl -fsS http://localhost:8132/ready
 
 bff-logs:
 	docker compose logs -f bff

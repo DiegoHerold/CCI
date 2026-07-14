@@ -39,6 +39,9 @@ class Settings(BaseSettings):
 
     pdf_extractor_worker_task_queue: str = "pdf-extractor-task-queue"
     excel_extractor_worker_task_queue: str = "excel-extractor-task-queue"
+    pdf_extractor_worker_url: str = "http://pdf-extractor-worker:8131"
+    excel_extractor_worker_url: str = "http://excel-extractor-worker:8132"
+    extractor_worker_timeout_seconds: float = Field(default=60.0, gt=0, le=300)
 
     model_config = SettingsConfigDict(
         env_file=".env",

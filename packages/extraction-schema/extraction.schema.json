@@ -6,12 +6,23 @@
     { "$ref": "#/$defs/ExtractionJob" },
     { "$ref": "#/$defs/ExtractorWorkerInput" },
     { "$ref": "#/$defs/ExtractorWorkerOutput" },
+    { "$ref": "#/$defs/RawExtractedField" },
+    { "$ref": "#/$defs/RawExtractedObject" },
+    { "$ref": "#/$defs/ExtractionRuleExecutionResult" },
     { "$ref": "#/$defs/ExtractionResult" }
   ],
   "$defs": {
     "ExtractionJobStatus": {
       "type": "string",
       "enum": ["pending", "queued", "starting", "running", "waiting_worker", "worker_running", "completed", "failed", "cancelled", "retrying", "requires_review"]
+    },
+    "ExtractionFieldStatus": {
+      "type": "string",
+      "enum": ["extracted", "not_found", "ambiguous", "failed", "partial"]
+    },
+    "ExtractionWorkerStatus": {
+      "type": "string",
+      "enum": ["completed", "completed_with_warnings", "failed", "unsupported"]
     },
     "ExtractionJob": {
       "type": "object",
@@ -103,12 +114,16 @@
       "required": ["extraction_job_id", "document", "preview", "template"],
       "properties": {
         "extraction_job_id": { "type": "string" },
+        "correlation_id": { "type": ["string", "null"] },
         "document": {
           "type": "object",
           "required": ["document_id", "file_format"],
           "properties": {
             "document_id": { "type": "string" },
+            "client_id": { "type": ["string", "null"] },
+            "competence_id": { "type": ["string", "null"] },
             "file_format": { "type": "string" },
+            "original_filename": { "type": ["string", "null"] },
             "storage_bucket": { "type": ["string", "null"] },
             "storage_key": { "type": ["string", "null"] }
           },
@@ -120,6 +135,7 @@
             "preview_id": { "type": ["string", "null"] },
             "storage_bucket": { "type": ["string", "null"] },
             "storage_key": { "type": ["string", "null"] },
+            "preview_json": { "type": ["object", "null"] },
             "preview": { "type": ["object", "null"] }
           },
           "additionalProperties": false
@@ -130,12 +146,15 @@
           "properties": {
             "template_id": { "type": "string" },
             "template_version_id": { "type": "string" },
+            "version_number": { "type": ["integer", "null"], "minimum": 1 },
             "file_format": { "type": "string" },
+            "structure_type": { "type": ["string", "null"] },
             "fields": { "type": "array", "items": { "type": "object" } },
             "extraction_rules": { "type": "array", "items": { "type": "object" } }
           },
           "additionalProperties": false
-        }
+        },
+        "options": { "type": "object" }
       },
       "additionalProperties": false
     },
@@ -144,10 +163,21 @@
       "required": ["extraction_job_id", "status", "raw_output", "warnings", "errors"],
       "properties": {
         "extraction_job_id": { "type": "string" },
-        "status": { "type": "string", "enum": ["completed", "failed", "requires_review"] },
+        "status": { "$ref": "#/$defs/ExtractionWorkerStatus" },
         "raw_output": { "type": "object" },
         "warnings": { "type": "array", "items": { "type": "string" } },
         "errors": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "ExtractionWarning": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "field_path": { "type": ["string", "null"] },
+        "rule_id": { "type": ["string", "null"] }
       },
       "additionalProperties": false
     },
@@ -156,7 +186,67 @@
       "required": ["code", "message"],
       "properties": {
         "code": { "type": "string" },
-        "message": { "type": "string" }
+        "message": { "type": "string" },
+        "field_path": { "type": ["string", "null"] },
+        "rule_id": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "RawExtractedField": {
+      "type": "object",
+      "required": ["field_path", "confidence", "status"],
+      "properties": {
+        "field_id": { "type": ["string", "null"] },
+        "field_path": { "type": "string" },
+        "raw_value": true,
+        "data_type": { "type": ["string", "null"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "status": { "$ref": "#/$defs/ExtractionFieldStatus" },
+        "evidence": { "type": ["object", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "RawExtractedArrayItem": {
+      "type": "object",
+      "required": ["index", "values"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0 },
+        "values": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "RawExtractedArray": {
+      "type": "object",
+      "required": ["field_path", "field_type", "items"],
+      "properties": {
+        "field_path": { "type": "string" },
+        "field_type": { "const": "array" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/RawExtractedArrayItem" } }
+      },
+      "additionalProperties": false
+    },
+    "RawExtractedObject": {
+      "type": "object",
+      "required": ["field_path", "field_type"],
+      "properties": {
+        "field_path": { "type": "string" },
+        "field_type": { "type": "string" },
+        "value": { "type": ["object", "null"] },
+        "items": { "type": ["array", "null"], "items": { "$ref": "#/$defs/RawExtractedArrayItem" } }
+      },
+      "additionalProperties": false
+    },
+    "ExtractionRuleExecutionResult": {
+      "type": "object",
+      "required": ["rule_id", "strategy", "status"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "strategy": { "type": "string" },
+        "field_path": { "type": ["string", "null"] },
+        "status": { "$ref": "#/$defs/ExtractionFieldStatus" },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "warnings": { "type": "array", "items": { "$ref": "#/$defs/ExtractionWarning" } },
+        "errors": { "type": "array", "items": { "$ref": "#/$defs/ExtractionError" } }
       },
       "additionalProperties": false
     },

@@ -18,6 +18,21 @@ class ExtractionJobStatus(str, Enum):
     REQUIRES_REVIEW = "requires_review"
 
 
+class ExtractionFieldStatus(str, Enum):
+    EXTRACTED = "extracted"
+    NOT_FOUND = "not_found"
+    AMBIGUOUS = "ambiguous"
+    FAILED = "failed"
+    PARTIAL = "partial"
+
+
+class ExtractionWorkerStatus(str, Enum):
+    COMPLETED = "completed"
+    COMPLETED_WITH_WARNINGS = "completed_with_warnings"
+    FAILED = "failed"
+    UNSUPPORTED = "unsupported"
+
+
 class ExtractionRequest(BaseModel):
     force_reprocess: bool = False
     matching_run_id: str | None = None
@@ -82,22 +97,71 @@ class ExtractionWorkflowOutput(BaseModel):
 
 class ExtractorWorkerInput(BaseModel):
     extraction_job_id: str
+    correlation_id: str | None = None
     document: dict[str, Any]
     preview: dict[str, Any]
     template: dict[str, Any]
+    options: dict[str, Any] = Field(default_factory=dict)
 
 
 class ExtractorWorkerOutput(BaseModel):
     extraction_job_id: str
-    status: str
+    status: ExtractionWorkerStatus
     raw_output: dict[str, Any] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
 
 
+class ExtractionWarning(BaseModel):
+    code: str
+    message: str
+    field_path: str | None = None
+    rule_id: str | None = None
+
+
 class ExtractionError(BaseModel):
     code: str
     message: str
+    field_path: str | None = None
+    rule_id: str | None = None
+
+
+class RawExtractedField(BaseModel):
+    field_id: str | None = None
+    field_path: str
+    raw_value: Any = None
+    data_type: str | None = None
+    confidence: float = Field(ge=0, le=1)
+    status: ExtractionFieldStatus
+    evidence: dict[str, Any] | None = None
+
+
+class RawExtractedArrayItem(BaseModel):
+    index: int = Field(ge=0)
+    values: dict[str, Any] = Field(default_factory=dict)
+
+
+class RawExtractedArray(BaseModel):
+    field_path: str
+    field_type: str = "array"
+    items: list[RawExtractedArrayItem] = Field(default_factory=list)
+
+
+class RawExtractedObject(BaseModel):
+    field_path: str
+    field_type: str
+    value: dict[str, Any] | None = None
+    items: list[RawExtractedArrayItem] | None = None
+
+
+class ExtractionRuleExecutionResult(BaseModel):
+    rule_id: str
+    strategy: str
+    field_path: str | None = None
+    status: ExtractionFieldStatus
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    warnings: list[ExtractionWarning] = Field(default_factory=list)
+    errors: list[ExtractionError] = Field(default_factory=list)
 
 
 class ExtractionRetryPolicy(BaseModel):

@@ -53,6 +53,9 @@ def get_temporal_client(settings: Annotated[Settings, Depends(get_settings)]) ->
 
 def get_worker_dispatcher(settings: Annotated[Settings, Depends(get_settings)]) -> WorkerDispatcher:
     return WorkerDispatcher(
-        settings.pdf_extractor_worker_task_queue,
-        settings.excel_extractor_worker_task_queue,
+        pdf_task_queue=settings.pdf_extractor_worker_task_queue,
+        excel_task_queue=settings.excel_extractor_worker_task_queue,
+        pdf_worker_url=settings.pdf_extractor_worker_url,
+        excel_worker_url=settings.excel_extractor_worker_url,
+        timeout_seconds=settings.extractor_worker_timeout_seconds,
     )

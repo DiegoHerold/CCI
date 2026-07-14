@@ -28,6 +28,32 @@ class ExtractionArtifactType(StrEnum):
     DEBUG_PAYLOAD = "debug_payload"
 
 
+class ExtractionResultStatus(StrEnum):
+    COMPLETED = "completed"
+    COMPLETED_WITH_WARNINGS = "completed_with_warnings"
+    REQUIRES_REVIEW = "requires_review"
+    FAILED = "failed"
+
+
+class ExtractedFieldStatus(StrEnum):
+    NORMALIZED = "normalized"
+    NOT_FOUND = "not_found"
+    NORMALIZATION_FAILED = "normalization_failed"
+    LOW_CONFIDENCE = "low_confidence"
+    AMBIGUOUS = "ambiguous"
+    EVIDENCE_MISSING = "evidence_missing"
+    REQUIRES_REVIEW = "requires_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    CORRECTED = "corrected"
+
+
+class NormalizationRunStatus(StrEnum):
+    STARTED = "started"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
 class ExtractorWorkerType(StrEnum):
     PDF = "pdf-extractor-worker"
     EXCEL = "excel-extractor-worker"

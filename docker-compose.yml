@@ -372,6 +372,9 @@ services:
       MINIO_BUCKET_EXTRACTION_ARTIFACTS: ${MINIO_BUCKET_EXTRACTION_ARTIFACTS:-cci-extraction-artifacts}
       PDF_EXTRACTOR_WORKER_TASK_QUEUE: ${PDF_EXTRACTOR_WORKER_TASK_QUEUE:-pdf-extractor-task-queue}
       EXCEL_EXTRACTOR_WORKER_TASK_QUEUE: ${EXCEL_EXTRACTOR_WORKER_TASK_QUEUE:-excel-extractor-task-queue}
+      PDF_EXTRACTOR_WORKER_URL: ${PDF_EXTRACTOR_WORKER_URL:-http://pdf-extractor-worker:8131}
+      EXCEL_EXTRACTOR_WORKER_URL: ${EXCEL_EXTRACTOR_WORKER_URL:-http://excel-extractor-worker:8132}
+      EXTRACTOR_WORKER_TIMEOUT_SECONDS: ${EXTRACTOR_WORKER_TIMEOUT_SECONDS:-60}
     depends_on:
       postgres-app:
         condition: service_healthy
@@ -387,6 +390,10 @@ services:
         condition: service_completed_successfully
       temporal:
         condition: service_started
+      pdf-extractor-worker:
+        condition: service_healthy
+      excel-extractor-worker:
+        condition: service_healthy
     ports:
       - "${EXTRACTION_SERVICE_PORT:-8130}:8130"
     healthcheck:
@@ -431,6 +438,80 @@ services:
         - python
         - -c
         - import urllib.request; urllib.request.urlopen('http://localhost:8121/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
+  pdf-extractor-worker:
+    build:
+      context: ./workers/pdf-extractor-worker
+    container_name: cci-pdf-extractor-worker
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: pdf-extractor-worker
+      PORT: 8131
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-cci_minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-cci_minio_password}
+      EXTRACTOR_WORKER_CONCURRENCY: ${EXTRACTOR_WORKER_CONCURRENCY:-2}
+      EXTRACTOR_MAX_PREVIEW_SIZE_MB: ${EXTRACTOR_MAX_PREVIEW_SIZE_MB:-25}
+      EXTRACTOR_MAX_TABLE_ROWS: ${EXTRACTOR_MAX_TABLE_ROWS:-10000}
+      EXTRACTOR_DEBUG_OUTPUT: ${EXTRACTOR_DEBUG_OUTPUT:-true}
+    depends_on:
+      minio:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+    ports:
+      - "8131:8131"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8131/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
+  excel-extractor-worker:
+    build:
+      context: ./workers/excel-extractor-worker
+    container_name: cci-excel-extractor-worker
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: excel-extractor-worker
+      PORT: 8132
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-cci_minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-cci_minio_password}
+      EXTRACTOR_WORKER_CONCURRENCY: ${EXTRACTOR_WORKER_CONCURRENCY:-2}
+      EXTRACTOR_MAX_PREVIEW_SIZE_MB: ${EXTRACTOR_MAX_PREVIEW_SIZE_MB:-25}
+      EXTRACTOR_MAX_TABLE_ROWS: ${EXTRACTOR_MAX_TABLE_ROWS:-10000}
+      EXTRACTOR_DEBUG_OUTPUT: ${EXTRACTOR_DEBUG_OUTPUT:-true}
+    depends_on:
+      minio:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+    ports:
+      - "8132:8132"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8132/ready')
       interval: 10s
       timeout: 5s
       retries: 5
@@ -686,10 +767,41 @@ services:
       MINIO_BUCKET_EXTRACTION_ARTIFACTS: cci-extraction-artifacts
       PDF_EXTRACTOR_WORKER_TASK_QUEUE: pdf-extractor-task-queue
       EXCEL_EXTRACTOR_WORKER_TASK_QUEUE: excel-extractor-task-queue
+      PDF_EXTRACTOR_WORKER_URL: http://pdf-extractor-worker:8131
+      EXCEL_EXTRACTOR_WORKER_URL: http://excel-extractor-worker:8132
+      EXTRACTOR_WORKER_TIMEOUT_SECONDS: 60
     depends_on:
       postgres-extraction-test:
         condition: service_healthy
     command: sh -c "alembic upgrade head && pytest -q"
+    networks:
+      - cci-network
+
+  pdf-extractor-worker-test:
+    build:
+      context: ./workers/pdf-extractor-worker
+    profiles: ["test"]
+    environment:
+      APP_ENV: test
+      SERVICE_NAME: pdf-extractor-worker
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: cci_minio
+      MINIO_SECRET_KEY: cci_minio_password
+    command: pytest -q
+    networks:
+      - cci-network
+
+  excel-extractor-worker-test:
+    build:
+      context: ./workers/excel-extractor-worker
+    profiles: ["test"]
+    environment:
+      APP_ENV: test
+      SERVICE_NAME: excel-extractor-worker
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: cci_minio
+      MINIO_SECRET_KEY: cci_minio_password
+    command: pytest -q
     networks:
       - cci-network
 

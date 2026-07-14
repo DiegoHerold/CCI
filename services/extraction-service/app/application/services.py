@@ -214,7 +214,7 @@ class ExtractionService:
             )
             worker_payload = await self._build_worker_payload(job, actor, correlation_id)
             result = await self.dispatcher.dispatch(worker_payload, selection)
-            if result.status != "completed":
+            if result.status not in {"completed", "completed_with_warnings"}:
                 errors = result.errors or ["Worker did not complete extraction"]
                 raise BusinessRuleError("EXTRACTION_WORKER_FAILED", "; ".join(errors))
             key = self.storage.generate_key(
@@ -342,6 +342,12 @@ class ExtractionService:
             authorization=actor.authorization,
             correlation_id=correlation_id,
         )
+        version = await self.template_service.get_template_version(
+            job.template_id,
+            job.template_version_id,
+            authorization=actor.authorization,
+            correlation_id=correlation_id,
+        )
         fields = await self.template_service.get_fields(
             job.template_id,
             authorization=actor.authorization,
@@ -355,9 +361,13 @@ class ExtractionService:
         metadata = preview.get("metadata") or {}
         return {
             "extraction_job_id": job.id,
+            "correlation_id": correlation_id,
             "document": {
                 "document_id": job.document_id,
+                "client_id": job.client_id,
+                "competence_id": job.competence_id,
                 "file_format": job.file_format,
+                "original_filename": document.get("originalFilename") or document.get("filename"),
                 "storage_bucket": document.get("storageBucket"),
                 "storage_key": document.get("storageKey"),
             },
@@ -365,14 +375,21 @@ class ExtractionService:
                 "preview_id": metadata.get("previewId"),
                 "storage_bucket": metadata.get("storageBucket"),
                 "storage_key": metadata.get("storageKey"),
+                "preview_json": preview.get("preview"),
                 "preview": preview.get("preview"),
             },
             "template": {
                 "template_id": job.template_id,
                 "template_version_id": job.template_version_id,
+                "version_number": version.get("versionNumber") or version.get("version_number"),
                 "file_format": template.get("fileFormat"),
+                "structure_type": template.get("structureType") or template.get("structure_type"),
                 "fields": fields,
                 "extraction_rules": rules,
+            },
+            "options": {
+                "strict_mode": False,
+                "include_debug": self.settings.app_env != "production",
             },
         }
 
