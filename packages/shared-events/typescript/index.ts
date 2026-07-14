@@ -1,4 +1,12 @@
 export type EventType =
+  | "DocumentUploaded" | "DocumentDuplicateDetected" | "DocumentRejected"
+  | "DocumentStorageFailed" | "DocumentPreviewRequested" | "DocumentPreviewStarted"
+  | "DocumentPreviewGenerated" | "DocumentPreviewFailed"
+  | "TemplateMatched" | "TemplateNotFound" | "TemplateAmbiguous"
+  | "ExtractionRequested" | "ExtractionCompleted" | "ExtractionFailed" | "ExtractionReviewed"
+  | "RulePublished" | "RuleExecutionCompleted"
+  | "ConferenceStarted" | "ConferenceCompleted"
+  | "ReportRequested" | "ReportGenerated"
   | "file.imported" | "document.classified" | "document.ambiguous"
   | "document.missing" | "document.confirmed" | "extraction.started"
   | "raw.extracted" | "variables.normalized" | "variables.ready"

@@ -1,3 +1,5 @@
-# Conference Model Service
+# Scaffold legado — Conference Model Service
 
-Responsabilidade futura: modelos de conferência, documentos esperados, configurações e versões por cliente. Status atual: scaffold criado, sem implementação.
+Scaffold legado da arquitetura granular anterior. A responsabilidade de modelos de conferência, documentos esperados, rule sets, execuções, resultados, auditoria, timeline e agenda pertence ao `conference-service`.
+
+Status atual: scaffold sem implementação funcional. Não é serviço canônico novo.

@@ -122,6 +122,11 @@ services:
         mc mb --ignore-existing local/processed-documents
         mc mb --ignore-existing local/reports
         mc mb --ignore-existing local/evidences
+        mc mb --ignore-existing local/$${MINIO_BUCKET_DOCUMENTS_ORIGINAL:-cci-documents-original}
+        mc mb --ignore-existing local/$${MINIO_BUCKET_DOCUMENTS_PREVIEW:-cci-documents-preview}
+        mc mb --ignore-existing local/$${MINIO_BUCKET_EXTRACTION_ARTIFACTS:-cci-extraction-artifacts}
+        mc mb --ignore-existing local/$${MINIO_BUCKET_REPORTS:-cci-reports}
+        mc mb --ignore-existing local/$${MINIO_BUCKET_TEMP:-cci-temp}
     restart: "no"
     networks:
       - cci-network
@@ -235,6 +240,98 @@ services:
     networks:
       - cci-network
 
+  document-service:
+    build:
+      context: ./services/document-service
+    container_name: cci-document-service
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: document-service
+      PORT: 8110
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cci}:${POSTGRES_PASSWORD:-cci_password}@postgres-app:5432/${POSTGRES_DB:-cci_platform}
+      IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8101}
+      IDENTITY_TIMEOUT_SECONDS: ${IDENTITY_TIMEOUT_SECONDS:-5}
+      CLIENT_SERVICE_URL: ${CLIENT_SERVICE_URL:-http://client-service:8102}
+      CLIENT_SERVICE_TIMEOUT_SECONDS: ${CLIENT_SERVICE_TIMEOUT_SECONDS:-5}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-cci_minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-cci_minio_password}
+      MINIO_BUCKET_DOCUMENTS_ORIGINAL: ${MINIO_BUCKET_DOCUMENTS_ORIGINAL:-cci-documents-original}
+      MINIO_BUCKET_DOCUMENTS_PREVIEW: ${MINIO_BUCKET_DOCUMENTS_PREVIEW:-cci-documents-preview}
+      DOCUMENT_MAX_FILE_SIZE_MB: ${DOCUMENT_MAX_FILE_SIZE_MB:-50}
+      DOCUMENT_MAX_ZIP_SIZE_MB: ${DOCUMENT_MAX_ZIP_SIZE_MB:-200}
+      DOCUMENT_MAX_FILES_PER_ZIP: ${DOCUMENT_MAX_FILES_PER_ZIP:-100}
+      DOCUMENT_ALLOWED_EXTENSIONS: ${DOCUMENT_ALLOWED_EXTENSIONS:-.pdf,.xlsx,.xls,.csv,.txt,.docx,.xml,.zip}
+      PARSER_WORKER_URL: ${PARSER_WORKER_URL:-http://parser-worker:8121}
+      PARSER_WORKER_TIMEOUT_SECONDS: ${PARSER_WORKER_TIMEOUT_SECONDS:-60}
+      PARSER_MAX_FILE_SIZE_MB: ${PARSER_MAX_FILE_SIZE_MB:-100}
+      PARSER_PREVIEW_MAX_JSON_SIZE_MB: ${PARSER_PREVIEW_MAX_JSON_SIZE_MB:-25}
+    depends_on:
+      postgres-app:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+      client-service:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+      parser-worker:
+        condition: service_healthy
+    ports:
+      - "8110:8110"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8110/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
+  parser-worker:
+    build:
+      context: ./workers/parser-worker
+    container_name: cci-parser-worker
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: parser-worker
+      PORT: 8121
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-cci_minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-cci_minio_password}
+      PARSER_WORKER_CONCURRENCY: ${PARSER_WORKER_CONCURRENCY:-2}
+      PARSER_MAX_FILE_SIZE_MB: ${PARSER_MAX_FILE_SIZE_MB:-100}
+      PARSER_PREVIEW_MAX_JSON_SIZE_MB: ${PARSER_PREVIEW_MAX_JSON_SIZE_MB:-25}
+    depends_on:
+      minio:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+    ports:
+      - "8121:8121"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8121/ready')
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cci-network
+
   bff:
     build:
       context: ./apps/bff
@@ -248,6 +345,7 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       IDENTITY_SERVICE_URL: ${IDENTITY_SERVICE_URL:-http://identity-service:8101}
       CLIENT_SERVICE_URL: ${CLIENT_SERVICE_URL:-http://client-service:8102}
+      DOCUMENT_SERVICE_URL: ${DOCUMENT_SERVICE_URL:-http://document-service:8110}
       CONFERENCE_MODEL_SERVICE_URL: ${CONFERENCE_MODEL_SERVICE_URL:-http://conference-model-service:8103}
       SCHEDULE_SERVICE_URL: ${SCHEDULE_SERVICE_URL:-http://schedule-service:8104}
       DOCUMENT_INGESTION_SERVICE_URL: ${DOCUMENT_INGESTION_SERVICE_URL:-http://document-ingestion-service:8110}
@@ -266,6 +364,8 @@ services:
       identity-service:
         condition: service_healthy
       client-service:
+        condition: service_healthy
+      document-service:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -309,6 +409,51 @@ services:
       DEFAULT_COMPETENCE_FOLDER_PATTERN: "{{YYYY}}/{{MM}}"
     depends_on:
       postgres-client-test:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && pytest -q"
+    networks:
+      - cci-network
+
+  postgres-document-test:
+    image: postgres:16
+    profiles: ["test"]
+    environment:
+      POSTGRES_DB: cci_document_test
+      POSTGRES_USER: cci_test
+      POSTGRES_PASSWORD: cci_test_password
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cci_test -d cci_document_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    networks:
+      - cci-network
+
+  document-service-test:
+    build:
+      context: ./services/document-service
+    profiles: ["test"]
+    environment:
+      APP_ENV: test
+      SERVICE_NAME: document-service
+      DATABASE_URL: postgresql+psycopg://cci_test:cci_test_password@postgres-document-test:5432/cci_document_test
+      IDENTITY_SERVICE_URL: http://identity-service:8101
+      CLIENT_SERVICE_URL: http://client-service:8102
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: cci_minio
+      MINIO_SECRET_KEY: cci_minio_password
+      MINIO_BUCKET_DOCUMENTS_ORIGINAL: cci-documents-original
+      MINIO_BUCKET_DOCUMENTS_PREVIEW: cci-documents-preview
+      DOCUMENT_MAX_FILE_SIZE_MB: 10
+      DOCUMENT_MAX_ZIP_SIZE_MB: 50
+      DOCUMENT_MAX_FILES_PER_ZIP: 20
+      PARSER_WORKER_URL: http://parser-worker:8121
+      PARSER_MAX_FILE_SIZE_MB: 10
+      PARSER_PREVIEW_MAX_JSON_SIZE_MB: 5
+    depends_on:
+      postgres-document-test:
         condition: service_healthy
     command: sh -c "alembic upgrade head && pytest -q"
     networks:

@@ -1,60 +1,69 @@
 # CCI — Conferência Contábil Inteligente
 
-A CCI é uma plataforma distribuída para automatizar conferências contábeis por cliente e competência. O fluxo futuro identificará documentos, extrairá e normalizará dados, executará regras versionadas e produzirá resultados, evidências, auditoria e relatórios.
+A CCI é uma plataforma distribuída para automatizar conferências contábeis por cliente e competência. O fluxo alvo registra documentos, gera preview estruturado, identifica templates, extrai campos/objetos com evidência, normaliza valores, executa regras versionadas e produz resultado consolidado, auditoria, timeline e relatórios.
 
-## Evolução por fases
+## Arquitetura oficial
 
-A Fase 1A criou o chão técnico, a Fase 1B padronizou templates, a Fase 2 definiu contratos compartilhados e a Fase 3 disponibilizou o BFF inicial. Serviços de negócio, workers e frontend ainda não foram implementados.
+```text
+apps/       Web App e BFF
+services/   domínios de negócio principais
+workers/    tarefas pesadas e assíncronas
+packages/   contratos, schemas, eventos, autenticação e bibliotecas puras
+infra/      Docker, banco, cache, mensageria, storage, workflows e observabilidade
+docs/       contexto, arquitetura e fases
+```
 
-Os containers disponíveis são:
+Serviços canônicos:
 
-- PostgreSQL principal da aplicação;
-- PostgreSQL exclusivo do Temporal;
-- Redis;
-- RabbitMQ com interface de administração;
-- MinIO e inicializador idempotente de buckets;
-- Temporal Server;
-- Temporal UI;
+- `identity-service`
+- `client-service`
+- `document-service`
+- `template-service`
+- `extraction-service`
+- `rule-service`
+- `conference-service`
+- `report-service`
+
+Os diretórios antigos mais granulares em `services/` são scaffolds históricos ou candidatos a módulos internos. A arquitetura atual evita criar microserviço para cada etapa técnica cedo demais.
+
+Decisão central:
+
+> Tipo de documento é categoria do template. O template é o centro do motor de extração.
+
+## Estado atual
+
+Já existem entregas até a Fase 6:
+
+- Fase 1A: chão técnico com Docker Compose, PostgreSQL, Redis, RabbitMQ, MinIO, Temporal, `.env`, README e Makefile.
+- Fase 1B: templates técnicos para serviços FastAPI, orquestração e workers.
+- Fase 2: packages compartilhados iniciais.
+- Fase 3: BFF inicial em FastAPI.
+- Fase 4 e 4.1: Identity Service com autenticação, JWT, sessões, RBAC e hardening.
+- Fase 5 e 5.1: Web inicial e telas administrativas preparadas para serviços incompletos.
+- Fase 6: Client Service com clientes, competências, vínculos, pastas lógicas e autorização por cliente.
+- Fase 7: Document Service com upload de arquivos/ZIP, hash, duplicidade, MinIO e metadados.
+
+O BFF, a Web, o Identity Service, o Client Service e o Document Service são componentes funcionais. Os demais domínios continuam para fases futuras.
+
+## Infra local
+
+Containers disponíveis:
+
+- PostgreSQL principal da aplicação.
+- PostgreSQL exclusivo do Temporal.
+- Redis.
+- RabbitMQ com interface de administração.
+- MinIO e inicializador idempotente de buckets.
+- Temporal Server.
+- Temporal UI.
 - BFF inicial em FastAPI.
+- Identity Service.
+- Client Service.
+- Document Service.
 
-## Pré-requisitos
+Gateway Nginx, Prometheus e OpenTelemetry Collector estão preparados em `docker-compose.override.yml`, mas só iniciam com os perfis `gateway` e `observability`.
 
-- Docker Desktop com Docker Compose;
-- `make` é opcional; todos os comandos também podem ser executados diretamente com `docker compose`.
-
-## Como executar
-
-```bash
-docker compose up -d
-docker compose ps
-```
-
-Opcionalmente:
-
-```bash
-make up
-make ps
-```
-
-O Compose possui valores locais padrão. Para personalizar, copie `.env.example` para `.env` e altere apenas o ambiente local.
-
-## Parar e limpar
-
-Parar sem remover os dados:
-
-```bash
-docker compose down
-```
-
-Parar e remover os volumes persistentes:
-
-```bash
-docker compose down -v
-```
-
-O segundo comando apaga os bancos, buckets e filas locais.
-
-## Portas locais
+Portas locais:
 
 | Componente | Endereço |
 | --- | --- |
@@ -68,158 +77,107 @@ O segundo comando apaga os bancos, buckets e filas locais.
 | Temporal UI | http://localhost:8233 |
 | BFF | http://localhost:8000 |
 | Identity Service (diagnóstico) | http://localhost:8101 |
+| Client Service (diagnóstico) | http://localhost:8102 |
+| Document Service (diagnóstico) | http://localhost:8110 |
 
 O PostgreSQL do Temporal não publica porta no host e só pode ser acessado pela rede interna do Compose.
 
-## Credenciais locais de desenvolvimento
+## Como executar
 
-| Componente | Usuário/chave | Senha/segredo | Banco |
-| --- | --- | --- | --- |
-| PostgreSQL App | `cci` | `cci_password` | `cci_platform` |
-| RabbitMQ | `cci` | `cci_password` | — |
-| MinIO | `cci_minio` | `cci_minio_password` | — |
+Pré-requisitos:
 
-Estas credenciais são exclusivas para desenvolvimento local e não devem ser reutilizadas em outros ambientes.
+- Docker Desktop com Docker Compose.
+- `make` opcional.
 
-## PostgreSQL da aplicação
+```bash
+docker compose up -d
+docker compose ps
+```
 
-A fase inicial utiliza um único cluster PostgreSQL para a aplicação, com isolamento lógico por schemas:
+Opcionalmente:
 
-`auth`, `core`, `models`, `schedules`, `documents`, `extraction`, `variables`, `rules`, `execution`, `audit`, `reports` e `logs`.
+```bash
+make up
+make ps
+```
 
-Cada serviço futuro será dono do seu domínio e não poderá acessar diretamente as tabelas internas de outro serviço. O script `infra/postgres/init/001_create_schemas.sql` cria somente os schemas e a tabela técnica `core.platform_bootstrap`.
+Para personalizar o ambiente local, copie `.env.example` para `.env` e altere apenas os valores necessários.
 
-O Temporal usa outro container e outro volume PostgreSQL. Seus dados internos nunca são misturados ao banco `cci_platform`.
+## Parar e limpar
 
-## Buckets MinIO
+Parar sem remover dados:
 
-O container `minio-setup` cria de forma idempotente:
+```bash
+docker compose down
+```
 
-- `raw-documents`;
-- `processed-documents`;
-- `reports`;
-- `evidences`.
+Parar e remover volumes persistentes:
 
-Após concluir, o container de setup permanece encerrado com código `0`; esse é o comportamento esperado.
+```bash
+docker compose down -v
+```
 
-## Estrutura do repositório
+O segundo comando apaga bancos, buckets e filas locais.
+
+## PostgreSQL e MinIO
+
+O projeto usa inicialmente um único cluster PostgreSQL para a aplicação, com isolamento lógico por schemas. Schemas atuais como `auth`, `core`, `documents`, `variables`, `execution`, `audit` e `logs` pertencem às fases já entregues ou aos scaffolds iniciais.
+
+Schemas alvo da arquitetura:
 
 ```text
-apps/       BFF e Web inicial funcionais
-services/   serviços de domínio futuros
-workers/    processamento pesado futuro
-packages/   contratos e bibliotecas compartilhadas futuras
-infra/      infraestrutura, inicialização e observabilidade
-docs/       contexto, arquitetura e documentação de fases
+identity
+client
+document
+template
+extraction
+rule
+conference
+report
 ```
 
-O BFF, a Web, o Identity Service e o Client Service são componentes funcionais. Os demais serviços e workers continuam como scaffolds incrementais.
+Buckets MinIO locais atuais:
 
-## Fase 1B — Templates Técnicos
+- `raw-documents`
+- `processed-documents`
+- `reports`
+- `evidences`
 
-Esta fase adiciona somente modelos técnicos reutilizáveis; nenhum serviço ou worker real foi implementado ou incluído no Docker Compose.
+Buckets alvo:
 
-- `templates/fastapi-api-service-template`: API FastAPI de domínio em camadas;
-- `templates/fastapi-orchestrator-service-template`: API de coordenação preparada para workflows futuros;
-- `templates/python-worker-template`: worker Python sem servidor HTTP.
+- `cci-documents-original`
+- `cci-documents-preview`
+- `cci-extraction-artifacts`
+- `cci-reports`
+- `cci-temp`
 
-Exemplos de geração:
+O setup cria os dois conjuntos de forma idempotente. Os nomes antigos preservam consumidores atuais; os nomes canônicos devem ser usados por serviços novos. Migração ou remoção exige fase explícita.
 
-```bash
-python tools/create_api_service_from_template.py identity-service
-python tools/create_orchestrator_from_template.py extraction-orchestrator
-python tools/create_worker_from_template.py pdf-extractor-worker
-```
+## Packages compartilhados
 
-Os scripts recusam pastas não vazias. A opção `--force` existe para uso explícito e nunca é aplicada automaticamente. Consulte `docs/fase-1b-templates-tecnicos.md` para os contratos técnicos de health, readiness, logs, correlação e erros.
+JSON Schema é o contrato canônico; Python/Pydantic e TypeScript são espelhos. Serviços importam contratos, mas packages não acessam PostgreSQL, MinIO, RabbitMQ, Temporal ou APIs.
 
-## Fase 2 — Packages Compartilhados
+`variable-schema` continua disponível por compatibilidade. Novos fluxos usam `field-schema` para definição, `extraction-schema` para valores extraídos e revisão e `evidence-schema` para origem. Consulte `packages/README.md`.
 
-A Fase 2 define contratos, exemplos e validações sem implementar serviços reais:
+## Adicionar serviços e workers
 
-- `shared-types`: entidades e estados comuns;
-- `shared-events`: catálogo e envelopes de eventos versionados;
-- `shared-auth`: roles, permissões, claims e autorização pura;
-- `document-schema`: documentos e evidências;
-- `variable-schema`: dados normalizados consumidos por regras;
-- `rule-schema`: regras versionadas e operadores permitidos;
-- `rule-engine`: motor Python puro, em memória e sem `eval`.
+Crie apenas um domínio canônico ou worker previsto, usando os geradores existentes em `tools/`. Adicione o componente ao Compose somente quando houver Dockerfile e healthcheck reais. Serviços de negócio recebem cliente, competência, permissões e correlation ID nos contratos; tarefas pesadas devem ser delegadas a Temporal/workers e eventos usam `packages/shared-events`.
 
-JSON Schema é a fonte canônica; Pydantic e TypeScript fornecem os espelhos iniciais. Para executar os testes:
+Dockerfiles em `infra/docker/` são referências e não substituem automaticamente Dockerfiles funcionais já existentes.
 
-```bash
-pip install -r packages/requirements-test.txt
-pytest packages
-```
+## Fases documentadas
 
-Esta fase não publica eventos, não acessa infraestrutura e não adiciona componentes ao Docker Compose.
+Consulte `docs/README.md` para a lista de fases existentes e o roadmap oficial 1A a 33.
 
-## Fase 3 — BFF Inicial
+Os próximos blocos principais são:
 
-O BFF FastAPI em `apps/bff` é a porta de entrada da futura web. Os placeholders de clientes, execuções e SSE permanecem; o placeholder de identidade foi substituído na Fase 4.
-
-```bash
-docker compose up -d --build bff
-make bff-health
-make bff-test
-```
-
-Todas as respostas propagam `X-Correlation-Id`, os logs são JSON e o CORS permite `http://localhost:3000`. Consulte `docs/fase-3-bff-inicial.md`.
-
-## Fase 4 — Identity Service
-
-O serviço FastAPI em `services/identity-service` implementa usuários persistentes, Argon2, login, JWT com expiração, `/auth/me`, RBAC e gestão administrativa. O schema `auth` é migrado com Alembic e o seed idempotente cria roles, permissões e o administrador configurado por ambiente.
-
-```bash
-copy .env.example .env
-# preencha JWT_ACCESS_SECRET, JWT_REFRESH_SECRET e SEED_ADMIN_*
-docker compose up -d --build identity-service bff
-make identity-test
-make bff-test
-```
-
-O frontend usa apenas as rotas `/api/v1/auth/*` e `/api/v1/users*` do BFF. Consulte `docs/fase-4-identity-service.md`.
-
-## Fase 4.1 — Identity Service Hardening
-
-O Identity agora mantém sessões persistentes, access/refresh tokens com
-segredos separados, logout e revogação, troca/reset de senha, bloqueio por
-falhas, rate limit persistente e auditoria interna append-only. Para a web, o
-BFF mantém o refresh token em cookie `HttpOnly`; o access token curto permanece
-somente em memória.
-
-Consulte `docs/fase-4.1-identity-hardening.md` para fluxos, variáveis e
-limitações.
-
-## Fase 5 — Web Inicial
-
-A aplicação Next.js em `apps/web` implementa login real, sessão em memória com
-refresh HttpOnly no BFF, rotas protegidas, RBAC visual, contexto operacional e
-um cockpit responsivo sem dados fictícios.
-
-```bash
-cd apps/web
-npm ci
-npm run dev
-```
-
-Consulte `docs/fase-5-web-inicial.md` para arquitetura frontend, contratos,
-componentes, testes e limitações.
-
-## Fase 6 — Client Service
-
-Clientes, competências, vínculos, preferências e pastas lógicas agora são
-persistidos pelo `client-service` no PostgreSQL do cluster. A Web consome os
-contratos reais pelo BFF em `/api/v1/clients` e `/api/v1/client-context`.
-
-```bash
-docker compose up -d --build identity-service client-service bff
-make client-test
-make client-health
-```
-
-Consulte `docs/fase-6-client-service.md` para contratos, permissões, migration,
-auditoria e limites.
+- Fase 7: Document Service.
+- Fase 8: Parser Worker e Preview.
+- Fase 9: Web Document Viewer.
+- Fase 10: Template Service.
+- Fase 11: Template Matching.
+- Fase 12: Template Builder / Annotation.
+- Fase 13 em diante: Extraction, regras, conferência, relatórios, observabilidade, qualidade, CI/CD e produção.
 
 ## Comandos úteis
 
@@ -233,11 +191,27 @@ make temporal-logs
 make identity-logs
 make identity-health
 make identity-test
+make client-health
+make client-test
 make bff-logs
 make bff-health
 make bff-test
+make build
+make migrate
+make seed
+make test
+make lint
+make format
+make infra-check
+make create-buckets
+make create-schemas
+make reset
 ```
 
-## Próximos passos
+`make reset` e `make clean` removem volumes locais somente após confirmação explícita.
 
-As próximas fases podem implementar os demais serviços gradualmente, mantendo o BFF sem domínio próprio e preservando a separação entre Control Plane, Data Plane, workers, packages e infraestrutura.
+## Fontes canônicas
+
+- `AGENTS.md`
+- `docs/contexto_mestre_conferencia_contabil.md`
+- `docs/arquitetura_conferencia_contabil.mmd`

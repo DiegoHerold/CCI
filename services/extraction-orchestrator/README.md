@@ -1,3 +1,5 @@
-# Extraction Orchestrator
+# Scaffold legado — Extraction Orchestrator
 
-Responsabilidade futura: coordenar workflows e workers de extração, OCR e IA. Status atual: scaffold criado, sem implementação.
+Scaffold legado da arquitetura granular anterior. Jobs, orquestração Temporal, workers, resultados, evidências, normalização e revisão pertencem ao `extraction-service`.
+
+Status atual: scaffold sem implementação funcional. Não é serviço canônico novo.

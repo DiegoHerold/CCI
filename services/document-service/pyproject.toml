@@ -1,0 +1,9 @@
+[project]
+name = "cci-document-service"
+version = "0.1.0"
+description = "CCI Document Service for original uploads, metadata, storage and duplicate detection."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

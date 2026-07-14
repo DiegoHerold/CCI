@@ -1,109 +1,122 @@
 flowchart TB
 
-  subgraph L1["1. Interface"]
+  subgraph Apps["Apps"]
     User["Usuário"]
-    Web["Frontend Web\nNext.js + React"]
-    Realtime["Realtime Gateway\nSSE ou WebSocket"]
+    Web["Web App\nNext.js em apps/web\n(alvo lógico: web-app)"]
+    BFF["BFF\nPorta de entrada da Web"]
   end
 
-  subgraph L2["2. Entrada da Plataforma"]
-    BFF["BFF / API Gateway\nNestJS ou FastAPI"]
+  subgraph Services["Services: domínios principais"]
+    Identity["Identity Service\nusuários, auth, roles,\npermissões, convites, sessões"]
+    Client["Client Service\nclientes, competências,\nvínculos, permissões por cliente,\npasta padrão"]
+    Document["Document Service\nupload, ZIP, metadados,\nhash, storage, status,\npreview estruturado"]
+    Template["Template Service\ntemplates, categorias,\ncampos/objetos, anotações,\nmatching, versões"]
+    Extraction["Extraction Service\njobs, Temporal,\nresultados, evidências,\nnormalização, revisão"]
+    Rule["Rule Service\nDSL, operadores, fórmulas,\nRule Builder futuro,\nsimulação, versões"]
+    Conference["Conference Service\nmodelos, documentos esperados,\nrule sets, execuções,\nresultado, auditoria,\ntimeline, agenda"]
+    Report["Report Service\nPDF, Excel,\ndocumentos anotados,\nexportações"]
   end
 
-  subgraph L3["3. Control Plane"]
-    Auth["Identity Service\nUsuários, login e permissões"]
-    Client["Client Service\nClientes e competências"]
-    Model["Conference Model Service\nModelos e documentos esperados"]
-    Rule["Rule Service\nRegras e versões"]
-    Schedule["Schedule Service\nAgendamentos"]
+  subgraph Workers["Workers: tarefas pesadas"]
+    ParserWorker["parser-worker\npreview PDF/Excel"]
+    PdfWorker["pdf-extractor-worker"]
+    ExcelWorker["excel-extractor-worker"]
+    OcrWorker["ocr-worker"]
+    AiWorker["ai-extraction-worker\nJSON + evidência + confiança\n+ revisão obrigatória"]
+    RuleWorker["rule-worker"]
+    ReportWorker["report-worker"]
   end
 
-  subgraph L4["4. Data Plane"]
-    Ingestion["Document Ingestion Service\nUpload, ZIP, pasta e agente"]
-    Classification["Document Classification Service\nIdentificação de documentos"]
-    Extraction["Extraction Orchestrator\nCoordena extração"]
-    Normalization["Normalization Service\nNormaliza dados"]
-    Variables["Variable Registry Service\nCatálogo de variáveis"]
+  subgraph Packages["Packages: contratos compartilhados"]
+    SharedTypes["shared-types"]
+    SharedEvents["shared-events"]
+    SharedAuth["shared-auth"]
+    DocSchema["document-schema"]
+    TemplateSchema["template-schema"]
+    AnnotationSchema["annotation-schema"]
+    ExtractionSchema["extraction-schema"]
+    EvidenceSchema["evidence-schema"]
+    RuleSchema["rule-schema"]
+    RuleEngine["rule-engine"]
   end
 
-  subgraph L5["5. Execução"]
-    Execution["Execution Control Service\nInicia conferências"]
-    Temporal["Temporal\nWorkflows duráveis"]
-    Workers["Workers\nPDF, Excel, Word, TXT, OCR, IA e Regras"]
-    Result["Result Service\nResultados das conferências"]
-  end
-
-  subgraph L6["6. Saída"]
-    Audit["Audit Service\nAuditoria de negócio"]
-    Report["Report Service\nPDF, Excel e balancete anotado"]
-    Logs["Log Service\nLogs claros para usuário"]
-  end
-
-  subgraph L7["7. Infraestrutura"]
-    Bus["Event Bus\nNATS ou RabbitMQ"]
-    Database["PostgreSQL\nSchemas por domínio"]
-    Storage["MinIO ou S3\nArquivos e relatórios"]
-    Redis["Redis\nCache e status temporário"]
-    Observability["OpenTelemetry\nSentry e Grafana"]
+  subgraph Infra["Infra: ambiente e plataforma"]
+    Postgres["PostgreSQL\nschemas por domínio"]
+    Redis["Redis\ncache, locks, estados transitórios"]
+    Bus["RabbitMQ ou NATS\neventos oficiais"]
+    Minio["MinIO / S3\noriginais, previews,\nartefatos, relatórios"]
+    Temporal["Temporal\nworkflows duráveis"]
+    Gateway["Gateway\nNginx ou Traefik"]
+    Observability["Observabilidade\nOpenTelemetry, Sentry,\nPrometheus, Grafana"]
   end
 
   User --> Web
-  Web -->|REST HTTPS| BFF
-  Realtime -->|logs e status| Web
+  Web -->|"REST/HTTPS"| BFF
 
-  BFF -->|gRPC| Auth
-  BFF -->|gRPC| Client
-  BFF -->|gRPC| Model
-  BFF -->|gRPC| Rule
-  BFF -->|gRPC| Schedule
+  BFF -->|"REST transição / gRPC alvo"| Identity
+  BFF -->|"REST transição / gRPC alvo"| Client
+  BFF -->|"REST transição / gRPC alvo"| Document
+  BFF -->|"REST transição / gRPC alvo"| Template
+  BFF -->|"REST transição / gRPC alvo"| Extraction
+  BFF -->|"REST transição / gRPC alvo"| Rule
+  BFF -->|"REST transição / gRPC alvo"| Conference
+  BFF -->|"REST transição / gRPC alvo"| Report
 
-  BFF -->|REST ou gRPC| Ingestion
-  Ingestion --> Storage
-  Ingestion -. "evento: arquivo importado" .-> Bus
+  Document --> Minio
+  Document --> ParserWorker
+  ParserWorker --> Minio
+  ParserWorker -. "DocumentPreviewGenerated" .-> Bus
 
-  Bus -. "evento" .-> Classification
-  Classification -. "documento identificado" .-> Bus
-  Bus -. "evento" .-> Extraction
+  Document -. "DocumentUploaded / DocumentStored" .-> Bus
+  Template -. "TemplateMatched / TemplateAmbiguous" .-> Bus
+  Extraction -. "ExtractionRequested" .-> Bus
+  Conference -. "ConferenceStarted / ConferenceCompleted" .-> Bus
+  Report -. "ReportRequested / ReportGenerated" .-> Bus
+
+  Template --> DocSchema
+  Template --> TemplateSchema
+  Template --> AnnotationSchema
+  Extraction --> ExtractionSchema
+  Extraction --> EvidenceSchema
+  Rule --> RuleSchema
+  Rule --> RuleEngine
+  Identity --> SharedAuth
+  Services --> SharedTypes
+  Services --> SharedEvents
 
   Extraction --> Temporal
-  Temporal --> Workers
-  Workers --> Storage
-  Workers -. "dados brutos extraidos" .-> Bus
+  Temporal --> PdfWorker
+  Temporal --> ExcelWorker
+  Temporal --> OcrWorker
+  Temporal --> AiWorker
+  Temporal --> RuleWorker
+  Temporal --> ReportWorker
 
-  Bus -. "evento" .-> Normalization
-  Normalization -. "variaveis normalizadas" .-> Bus
-  Bus -. "evento" .-> Variables
+  PdfWorker --> Extraction
+  ExcelWorker --> Extraction
+  OcrWorker --> Extraction
+  AiWorker --> Extraction
+  RuleWorker --> Conference
+  ReportWorker --> Report
 
-  BFF -->|iniciar execução| Execution
-  Schedule -. "agendamento disparado" .-> Bus
-  Bus -. "evento" .-> Execution
+  RuleWorker --> RuleEngine
+  Report --> Minio
+  ReportWorker --> Minio
 
-  Execution --> Temporal
-  Temporal --> Workers
-  Workers -. "regra executada" .-> Bus
-  Bus -. "evento" .-> Result
-
-  Result -. "resultado criado" .-> Bus
-  Bus -. "evento" .-> Audit
-  Bus -. "execução finalizada" .-> Report
-  Bus -. "eventos e logs" .-> Logs
-
-  Logs --> Realtime
-  Report --> Storage
-
-  Auth --> Database
-  Client --> Database
-  Model --> Database
-  Rule --> Database
-  Variables --> Database
-  Result --> Database
-  Audit --> Database
-  Report --> Database
+  Identity --> Postgres
+  Client --> Postgres
+  Document --> Postgres
+  Template --> Postgres
+  Extraction --> Postgres
+  Rule --> Postgres
+  Conference --> Postgres
+  Report --> Postgres
 
   BFF --> Redis
-  Execution --> Redis
+  Services --> Redis
+  Services -. "eventos de domínio" .-> Bus
+  Workers -. "status e resultados" .-> Bus
 
-  BFF --> Observability
-  Ingestion --> Observability
+  Apps --> Observability
+  Services --> Observability
   Workers --> Observability
-  Logs --> Observability

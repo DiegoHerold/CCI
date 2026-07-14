@@ -19,3 +19,18 @@ def test_document_example_matches_schema() -> None:
 
 def test_evidence_example_matches_schema() -> None:
     validate("evidence.schema.json", "evidence.example.json")
+
+
+def test_preview_schema_is_valid() -> None:
+    schema = json.loads((PACKAGE / "preview.schema.json").read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+
+
+def test_upload_schema_is_valid() -> None:
+    schema = json.loads((PACKAGE / "upload.schema.json").read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)
+
+
+def test_selection_schema_is_valid() -> None:
+    schema = json.loads((PACKAGE / "selection.schema.json").read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)

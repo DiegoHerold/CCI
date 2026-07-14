@@ -11,6 +11,17 @@ CREATE SCHEMA IF NOT EXISTS audit;
 CREATE SCHEMA IF NOT EXISTS reports;
 CREATE SCHEMA IF NOT EXISTS logs;
 
+-- Schemas canônicos. Os schemas históricos acima permanecem durante a
+-- migração para não interromper as fases já entregues.
+CREATE SCHEMA IF NOT EXISTS identity;
+CREATE SCHEMA IF NOT EXISTS client;
+CREATE SCHEMA IF NOT EXISTS document;
+CREATE SCHEMA IF NOT EXISTS template;
+CREATE SCHEMA IF NOT EXISTS extraction;
+CREATE SCHEMA IF NOT EXISTS rule;
+CREATE SCHEMA IF NOT EXISTS conference;
+CREATE SCHEMA IF NOT EXISTS report;
+
 CREATE TABLE IF NOT EXISTS core.platform_bootstrap (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,

@@ -1,3 +1,5 @@
-# Document Classification Service
+# Scaffold legado — Document Classification Service
 
-Responsabilidade futura: classificar documentos e detectar ausências, duplicidades e ambiguidades. Status atual: scaffold criado, sem implementação.
+Scaffold legado da arquitetura granular anterior. Classificação por tipo/categoria, sinais de identificação e matching pertencem ao `template-service`, com documentos registrados pelo `document-service`.
+
+Status atual: scaffold sem implementação funcional. Não é serviço canônico novo.

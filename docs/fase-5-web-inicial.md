@@ -23,7 +23,7 @@ Rotas:
 | `/dashboard` | autenticado | cockpit e contexto real, sem métricas fictícias |
 | `/clients` | `clients:read` | clientes reais retornados por `/client-context` |
 | `/competencies` | `client-competencies:read` | lista real do cliente selecionado |
-| `/documents`, `/models`, `/variables`, `/rules` | `conferences:read` | estados informativos de módulos futuros |
+| `/documents`, `/models`, `/variables`, `/rules` | `conferences:read` | estados informativos de módulos futuros; `/variables` é rótulo histórico para campos/objetos extraídos e revisão |
 | `/executions`, `/audit` | `conferences:read` | estados informativos de módulos futuros |
 | `/reports` | `reports:read` | estado informativo |
 | `/settings` | autenticado | usuário, roles e estratégia da sessão |
@@ -58,7 +58,7 @@ Se o serviço estiver indisponível, o dashboard mostra erro recuperável. Lista
 
 Componentes reutilizáveis: `AppShell`, `Sidebar`, `Topbar`, `ProductLogo`, `UserMenu`, `ThemeSurface`, `PageHeader`, `MetricCard`, `StatusBadge`, `EmptyState`, `ErrorState`, `LoadingState`, `ForbiddenState`, `ClientSelector`, `CompetenceSelector`, `ModuleCard`, `TimelinePreview`, `PermissionGate` e guards.
 
-O visual adota um cockpit semi-escuro com superfícies slate profundas, bordas translúcidas e realces contidos em ciano/violeta. A tela de login representa o fluxo documento → variáveis → regras → auditoria. O dashboard usa linha operacional, integridade do contexto e módulos por domínio, evitando o padrão de cards SaaS genéricos. Animações são CSS leves e respeitam `prefers-reduced-motion`.
+O visual adota um cockpit semi-escuro com superfícies slate profundas, bordas translúcidas e realces contidos em ciano/violeta. A tela de login representa o fluxo documento → campos/objetos extraídos → regras → auditoria. O dashboard usa linha operacional, integridade do contexto e módulos por domínio, evitando o padrão de cards SaaS genéricos. Animações são CSS leves e respeitam `prefers-reduced-motion`.
 
 ## Ambiente e execução
 
@@ -91,7 +91,7 @@ npm run build
 
 - não há recuperação de senha, MFA, OAuth ou SSO;
 - a proteção de navegação é client-side porque o access token não é exposto ao servidor Next; o BFF continua protegendo todos os dados;
-- módulos de documentos, modelos, variáveis, regras, execuções, auditoria e relatórios são estados informativos, sem ações falsas;
+- módulos de documentos, modelos, campos/objetos extraídos, regras, execuções, auditoria e relatórios são estados informativos, sem ações falsas;
 - status em tempo real/SSE, upload e previews permanecem fora do escopo;
 - uma implantação cross-site entre Web e BFF exigirá revisão de SameSite/CORS e proteção CSRF antes de `SameSite=None`;
 - permissões específicas de futuros domínios devem ser adicionadas ao contrato RBAC antes de habilitar seus menus.

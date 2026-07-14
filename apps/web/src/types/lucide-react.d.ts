@@ -19,6 +19,7 @@ declare module "lucide-react" {
   export const AlertCircle: LucideIcon;
   export const AlertTriangle: LucideIcon;
   export const ArrowRight: LucideIcon;
+  export const ArrowLeft: LucideIcon;
   export const ArrowUpRight: LucideIcon;
   export const Binary: LucideIcon;
   export const BookOpenCheck: LucideIcon;
@@ -31,7 +32,11 @@ declare module "lucide-react" {
   export const Clock: LucideIcon;
   export const Clock3: LucideIcon;
   export const CircleDashed: LucideIcon;
+  export const Clipboard: LucideIcon;
+  export const Eraser: LucideIcon;
+  export const Eye: LucideIcon;
   export const FileCheck2: LucideIcon;
+  export const FileQuestion: LucideIcon;
   export const FileSearch: LucideIcon;
   export const FileStack: LucideIcon;
   export const Fingerprint: LucideIcon;
@@ -47,9 +52,12 @@ declare module "lucide-react" {
   export const Mail: LucideIcon;
   export const MapPin: LucideIcon;
   export const Menu: LucideIcon;
+  export const MousePointer2: LucideIcon;
   export const PlugZap: LucideIcon;
   export const Plus: LucideIcon;
+  export const Play: LucideIcon;
   export const Radio: LucideIcon;
+  export const RefreshCw: LucideIcon;
   export const RotateCcw: LucideIcon;
   export const ScanLine: LucideIcon;
   export const ScrollText: LucideIcon;
@@ -65,4 +73,6 @@ declare module "lucide-react" {
   export const Variable: LucideIcon;
   export const Workflow: LucideIcon;
   export const X: LucideIcon;
+  export const ZoomIn: LucideIcon;
+  export const ZoomOut: LucideIcon;
 }

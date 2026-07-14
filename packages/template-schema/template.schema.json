@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/templates/template.schema.json",
+  "title": "CCI Template Version",
+  "type": "object",
+  "required": ["template_id", "name", "category", "format", "structure_type", "version", "status", "identification_signals", "field_paths"],
+  "properties": {
+    "template_id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "category": {"type": "string", "minLength": 1},
+    "format": {"type": "string", "enum": ["pdf", "xlsx", "xls", "csv", "image", "other"]},
+    "structure_type": {"type": "string", "enum": ["flat", "hierarchical", "tabular", "mixed"]},
+    "version": {"type": "integer", "minimum": 1},
+    "status": {"type": "string", "enum": ["draft", "published", "archived"]},
+    "identification_signals": {"type": "array", "items": {"type": "object", "required": ["kind", "value"], "properties": {"kind": {"type": "string", "enum": ["filename", "text", "sheet", "header", "layout"]}, "value": {"type": "string"}, "weight": {"type": "number", "minimum": 0, "maximum": 1}}, "additionalProperties": false}},
+    "field_paths": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  },
+  "additionalProperties": false
+}

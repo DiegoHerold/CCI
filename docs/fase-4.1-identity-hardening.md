@@ -7,9 +7,9 @@ dono do schema PostgreSQL `auth`. O BFF continua sem regras de autenticação:
 ele transporta requisições e aplica a estratégia web de cookie. Nenhum outro
 serviço lê tabelas de identidade.
 
-Não há publicação em RabbitMQ nem integração com o `audit-service`. Os eventos
+Não há publicação em RabbitMQ nem integração com auditoria/timeline de conferência. Os eventos
 descritos aqui são registros append-only internos de segurança no schema
-`auth`; auditoria contábil de negócio continua sendo outro domínio.
+`auth`; auditoria contábil de negócio continua sendo responsabilidade do `conference-service`.
 
 ## Fluxo de login e sessão
 

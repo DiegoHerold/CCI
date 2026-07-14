@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/documents/selection.schema.json",
+  "title": "CCI Document Viewer Selection",
+  "oneOf": [
+    { "$ref": "#/$defs/PdfTextSelection" },
+    { "$ref": "#/$defs/PdfAreaSelection" },
+    { "$ref": "#/$defs/PdfTableSelection" },
+    { "$ref": "#/$defs/ExcelCellSelection" },
+    { "$ref": "#/$defs/ExcelColumnSelection" },
+    { "$ref": "#/$defs/ExcelRowSelection" },
+    { "$ref": "#/$defs/ExcelRangeSelection" },
+    { "$ref": "#/$defs/ExcelTableSelection" },
+    { "$ref": "#/$defs/EvidenceHighlight" }
+  ],
+  "$defs": {
+    "BoundingBox": {
+      "type": "object",
+      "required": ["x0", "y0", "x1", "y1"],
+      "properties": {
+        "x0": { "type": "number" },
+        "y0": { "type": "number" },
+        "x1": { "type": "number" },
+        "y1": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "PdfTextSelection": {
+      "type": "object",
+      "required": ["selection_type", "document_id", "page_number", "text", "bbox", "source"],
+      "properties": {
+        "selection_type": { "enum": ["pdf_text_block", "pdf_line"] },
+        "document_id": { "type": "string" },
+        "page_number": { "type": "integer", "minimum": 1 },
+        "text": { "type": "string" },
+        "bbox": { "$ref": "#/$defs/BoundingBox" },
+        "source": { "const": "preview" }
+      },
+      "additionalProperties": false
+    },
+    "PdfAreaSelection": {
+      "type": "object",
+      "required": ["selection_type", "document_id", "page_number", "bbox", "source"],
+      "properties": {
+        "selection_type": { "const": "pdf_area" },
+        "document_id": { "type": "string" },
+        "page_number": { "type": "integer", "minimum": 1 },
+        "bbox": { "$ref": "#/$defs/BoundingBox" },
+        "source": { "const": "user_area_selection" }
+      },
+      "additionalProperties": false
+    },
+    "PdfTableSelection": {
+      "type": "object",
+      "required": ["selection_type", "document_id", "page_number", "table_id", "bbox", "confidence"],
+      "properties": {
+        "selection_type": { "const": "pdf_table_candidate" },
+        "document_id": { "type": "string" },
+        "page_number": { "type": "integer", "minimum": 1 },
+        "table_id": { "type": "string" },
+        "bbox": { "$ref": "#/$defs/BoundingBox" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source": { "const": "preview" }
+      },
+      "additionalProperties": false
+    },
+    "ExcelCellSelection": {
+      "type": "object",
+      "required": ["selection_type", "document_id", "sheet_name", "sheet_index", "cell"],
+      "properties": {
+        "selection_type": { "const": "excel_cell" },
+        "document_id": { "type": "string" },
+        "sheet_name": { "type": "string" },
+        "sheet_index": { "type": "integer", "minimum": 0 },
+        "cell": {
+          "type": "object",
+          "required": ["address", "row", "column", "column_letter", "value"],
+          "properties": {
+            "address": { "type": "string" },
+            "row": { "type": "integer", "minimum": 1 },
+            "column": { "type": "integer", "minimum": 1 },
+            "column_letter": { "type": "string" },
+            "value": true,
+            "raw_value": true,
+            "data_type": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "source": { "const": "preview" }
+      },
+      "additionalProperties": false
+    },
+    "ExcelColumnSelection": {
+      "type": "object",
+      "required": ["selection_type", "document_id", "sheet_name", "sheet_index", "column", "column_letter"],
+      "properties": {
+        "selection_type": { "const": "excel_column" },
+        "document_id": { "type": "string" },
+        "sheet_name": { "type": "string" },
+        "sheet_index": { "type": "integer", "minimum": 0 },
+        "column": { "type": "integer", "minimum": 1 },
+        "column_letter": { "type": "string" },
+        "header": { "type": ["string", "null"] },
+        "source": { "const": "user_column_selection" }
+      },
+      "additionalProperties": false
+    },
+    "ExcelRowSelection": {
+      "type": "object",
+      "required": ["selection_type", "document_id", "sheet_name", "sheet_index", "row"],
+      "properties": {
+        "selection_type": { "const": "excel_row" },
+        "document_id": { "type": "string" },
+        "sheet_name": { "type": "string" },
+        "sheet_index": { "type": "integer", "minimum": 0 },
+        "row": { "type": "integer", "minimum": 1 },
+        "source": { "const": "user_row_selection" }
+      },
+      "additionalProperties": false
+    },
+    "ExcelRangeSelection": {
+      "type": "object",
+      "required": ["selection_type", "document_id", "sheet_name", "sheet_index", "range"],
+      "properties": {
+        "selection_type": { "const": "excel_range" },
+        "document_id": { "type": "string" },
+        "sheet_name": { "type": "string" },
+        "sheet_index": { "type": "integer", "minimum": 0 },
+        "range": {
+          "type": "object",
+          "required": ["start_cell", "end_cell", "start_row", "end_row", "start_column", "end_column"],
+          "properties": {
+            "start_cell": { "type": "string" },
+            "end_cell": { "type": "string" },
+            "start_row": { "type": "integer", "minimum": 1 },
+            "end_row": { "type": "integer", "minimum": 1 },
+            "start_column": { "type": "integer", "minimum": 1 },
+            "end_column": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "source": { "const": "user_range_selection" }
+      },
+      "additionalProperties": false
+    },
+    "ExcelTableSelection": {
+      "type": "object",
+      "required": ["selection_type", "document_id", "sheet_name", "sheet_index", "table_id", "range", "header_row", "start_row", "end_row", "confidence"],
+      "properties": {
+        "selection_type": { "const": "excel_table_candidate" },
+        "document_id": { "type": "string" },
+        "sheet_name": { "type": "string" },
+        "sheet_index": { "type": "integer", "minimum": 0 },
+        "table_id": { "type": "string" },
+        "range": { "type": "string" },
+        "header_row": { "type": "integer", "minimum": 1 },
+        "start_row": { "type": "integer", "minimum": 1 },
+        "end_row": { "type": "integer", "minimum": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source": { "const": "preview" }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceHighlight": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["evidence_type", "page_number", "bbox", "label"],
+          "properties": {
+            "evidence_type": { "const": "pdf" },
+            "page_number": { "type": "integer", "minimum": 1 },
+            "bbox": { "$ref": "#/$defs/BoundingBox" },
+            "label": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["evidence_type", "sheet_name", "cell_range", "label"],
+          "properties": {
+            "evidence_type": { "const": "excel" },
+            "sheet_name": { "type": "string" },
+            "cell_range": { "type": "string" },
+            "label": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

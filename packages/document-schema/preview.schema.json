@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/documents/preview.schema.json",
+  "title": "CCI Parsed Document Preview",
+  "oneOf": [
+    {"$ref": "#/$defs/PdfDocumentPreview"},
+    {"$ref": "#/$defs/ExcelDocumentPreview"}
+  ],
+  "$defs": {
+    "DocumentPreviewStatus": {
+      "type": "string",
+      "enum": ["preview_pending", "preview_processing", "preview_ready", "preview_failed"]
+    },
+    "ParsingJobStatus": {
+      "type": "string",
+      "enum": ["pending", "processing", "completed", "failed"]
+    },
+    "BoundingBox": {
+      "type": "object",
+      "required": ["x0", "y0", "x1", "y1"],
+      "properties": {
+        "x0": {"type": "number"},
+        "y0": {"type": "number"},
+        "x1": {"type": "number"},
+        "y1": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "PreviewSummary": {
+      "type": "object",
+      "required": ["page_count", "sheet_count", "text_block_count", "table_count"],
+      "properties": {
+        "page_count": {"type": "integer", "minimum": 0},
+        "sheet_count": {"type": "integer", "minimum": 0},
+        "text_block_count": {"type": "integer", "minimum": 0},
+        "table_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "PdfToken": {
+      "type": "object",
+      "required": ["token_id", "text", "bbox"],
+      "properties": {
+        "token_id": {"type": "string"},
+        "text": {"type": "string"},
+        "bbox": {"$ref": "#/$defs/BoundingBox"},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "PdfLine": {
+      "type": "object",
+      "required": ["line_id", "text", "bbox", "tokens"],
+      "properties": {
+        "line_id": {"type": "string"},
+        "text": {"type": "string"},
+        "bbox": {"$ref": "#/$defs/BoundingBox"},
+        "tokens": {"type": "array", "items": {"$ref": "#/$defs/PdfToken"}}
+      },
+      "additionalProperties": false
+    },
+    "PdfTextBlock": {
+      "type": "object",
+      "required": ["block_id", "text", "bbox", "source"],
+      "properties": {
+        "block_id": {"type": "string"},
+        "text": {"type": "string"},
+        "bbox": {"$ref": "#/$defs/BoundingBox"},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "source": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "PdfTableCandidate": {
+      "type": "object",
+      "required": ["table_id", "bbox", "rows", "columns", "confidence"],
+      "properties": {
+        "table_id": {"type": "string"},
+        "bbox": {"$ref": "#/$defs/BoundingBox"},
+        "rows": {"type": "array"},
+        "columns": {"type": "array"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "PdfPagePreview": {
+      "type": "object",
+      "required": ["page_number", "width", "height", "rotation", "text_blocks", "lines", "tables"],
+      "properties": {
+        "page_number": {"type": "integer", "minimum": 1},
+        "width": {"type": "number", "minimum": 0},
+        "height": {"type": "number", "minimum": 0},
+        "rotation": {"type": "integer"},
+        "text_blocks": {"type": "array", "items": {"$ref": "#/$defs/PdfTextBlock"}},
+        "lines": {"type": "array", "items": {"$ref": "#/$defs/PdfLine"}},
+        "tables": {"type": "array", "items": {"$ref": "#/$defs/PdfTableCandidate"}}
+      },
+      "additionalProperties": false
+    },
+    "PdfDocumentPreview": {
+      "type": "object",
+      "required": ["document_id", "file_format", "parser_version", "generated_at", "requires_ocr", "pages", "summary"],
+      "properties": {
+        "document_id": {"type": "string"},
+        "file_format": {"const": "PDF"},
+        "parser_version": {"type": "string"},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "requires_ocr": {"type": "boolean"},
+        "ocr_reason": {"type": ["string", "null"]},
+        "pages": {"type": "array", "items": {"$ref": "#/$defs/PdfPagePreview"}},
+        "summary": {"$ref": "#/$defs/PreviewSummary"}
+      },
+      "additionalProperties": false
+    },
+    "ExcelCellPreview": {
+      "type": "object",
+      "required": ["cell_id", "address", "row", "column", "column_letter", "value", "raw_value", "data_type", "is_merged", "merged_range"],
+      "properties": {
+        "cell_id": {"type": "string"},
+        "address": {"type": "string"},
+        "row": {"type": "integer", "minimum": 1},
+        "column": {"type": "integer", "minimum": 1},
+        "column_letter": {"type": "string"},
+        "value": true,
+        "raw_value": true,
+        "data_type": {"type": "string"},
+        "is_merged": {"type": "boolean"},
+        "merged_range": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "ExcelMergedRange": {
+      "type": "object",
+      "required": ["range", "start_row", "start_column", "end_row", "end_column"],
+      "properties": {
+        "range": {"type": "string"},
+        "start_row": {"type": "integer", "minimum": 1},
+        "start_column": {"type": "integer", "minimum": 1},
+        "end_row": {"type": "integer", "minimum": 1},
+        "end_column": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "ExcelDetectedHeader": {
+      "type": "object",
+      "required": ["row", "values", "confidence"],
+      "properties": {
+        "row": {"type": "integer", "minimum": 1},
+        "values": {"type": "array", "items": {"type": "string"}},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "ExcelTableCandidate": {
+      "type": "object",
+      "required": ["table_id", "range", "header_row", "start_row", "end_row", "confidence"],
+      "properties": {
+        "table_id": {"type": "string"},
+        "range": {"type": "string"},
+        "header_row": {"type": "integer", "minimum": 1},
+        "start_row": {"type": "integer", "minimum": 1},
+        "end_row": {"type": "integer", "minimum": 1},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "ExcelSheetPreview": {
+      "type": "object",
+      "required": ["sheet_id", "name", "index", "max_row", "max_column", "cells", "merged_cells", "detected_headers", "detected_tables"],
+      "properties": {
+        "sheet_id": {"type": "string"},
+        "name": {"type": "string"},
+        "index": {"type": "integer", "minimum": 0},
+        "max_row": {"type": "integer", "minimum": 0},
+        "max_column": {"type": "integer", "minimum": 0},
+        "cells": {"type": "array", "items": {"$ref": "#/$defs/ExcelCellPreview"}},
+        "merged_cells": {"type": "array", "items": {"$ref": "#/$defs/ExcelMergedRange"}},
+        "detected_headers": {"type": "array", "items": {"$ref": "#/$defs/ExcelDetectedHeader"}},
+        "detected_tables": {"type": "array", "items": {"$ref": "#/$defs/ExcelTableCandidate"}}
+      },
+      "additionalProperties": false
+    },
+    "ExcelDocumentPreview": {
+      "type": "object",
+      "required": ["document_id", "file_format", "parser_version", "generated_at", "requires_ocr", "sheets", "summary"],
+      "properties": {
+        "document_id": {"type": "string"},
+        "file_format": {"enum": ["XLSX", "XLS"]},
+        "parser_version": {"type": "string"},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "requires_ocr": {"const": false},
+        "sheets": {"type": "array", "items": {"$ref": "#/$defs/ExcelSheetPreview"}},
+        "summary": {"$ref": "#/$defs/PreviewSummary"}
+      },
+      "additionalProperties": false
+    },
+    "ParsingJob": {
+      "type": "object",
+      "required": ["parsing_job_id", "document_id", "status"],
+      "properties": {
+        "parsing_job_id": {"type": "string"},
+        "document_id": {"type": "string"},
+        "preview_id": {"type": "string"},
+        "status": {"$ref": "#/$defs/ParsingJobStatus"},
+        "requested_by": {"type": "string"},
+        "started_at": {"type": ["string", "null"], "format": "date-time"},
+        "finished_at": {"type": ["string", "null"], "format": "date-time"},
+        "error_message": {"type": ["string", "null"]},
+        "parser_worker_version": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    }
+  }
+}

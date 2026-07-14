@@ -1,3 +1,5 @@
-# Result Service
+# Scaffold legado — Result Service
 
-Responsabilidade futura: persistir e consolidar resultados das regras e conferências. Status atual: scaffold criado, sem implementação.
+Scaffold legado da arquitetura granular anterior. Resultados consolidados, diferenças, criticidade e explicação de negócio pertencem ao `conference-service`.
+
+Status atual: scaffold sem implementação funcional. Não é serviço canônico novo.

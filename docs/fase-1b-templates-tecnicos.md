@@ -12,7 +12,7 @@ Usado por serviços de domínio. Organiza entrada HTTP, domínio puro, casos de 
 
 ### Orchestrator Service
 
-Usado por `extraction-orchestrator` e `execution-control-service`. Acrescenta comandos, estado de orquestração e pontos de extensão para workflows, activities e Temporal. A rota `POST /workflows/placeholder` retorna `202`, mas não inicia workflow.
+Usado como base técnica para módulos de orquestração dentro de serviços canônicos, principalmente `extraction-service` e `conference-service`. Os nomes antigos `extraction-orchestrator` e `execution-control-service` ficam apenas como scaffolds históricos da fase inicial. A rota `POST /workflows/placeholder` retorna `202`, mas não inicia workflow.
 
 ### Worker
 
@@ -52,7 +52,7 @@ Exceções HTTP, validação e falhas inesperadas usam a estrutura:
 
 ```bash
 python tools/create_api_service_from_template.py identity-service
-python tools/create_orchestrator_from_template.py extraction-orchestrator
+python tools/create_orchestrator_from_template.py extraction-service
 python tools/create_worker_from_template.py pdf-extractor-worker
 ```
 

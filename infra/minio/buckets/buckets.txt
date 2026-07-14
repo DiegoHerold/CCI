@@ -1,0 +1,5 @@
+cci-documents-original
+cci-documents-preview
+cci-extraction-artifacts
+cci-reports
+cci-temp

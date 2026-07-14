@@ -1,0 +1,3 @@
+export interface ExtractedFieldValue { path: string; raw_value: unknown; normalized_value: unknown; value_type: string; confidence: number; evidence_ids: string[] }
+export interface ExtractedObject { object_path: string; fields: ExtractedFieldValue[] }
+export interface ExtractionResult { job_id: string; document_id: string; client_id: string; competence_id: string; template_id: string; template_version: number; status: "requested" | "running" | "review_required" | "completed" | "failed" | "cancelled"; review_status?: "not_required" | "pending" | "approved" | "corrected" | "rejected"; objects: ExtractedObject[]; error_code?: string | null }

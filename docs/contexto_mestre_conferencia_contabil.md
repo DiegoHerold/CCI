@@ -2,28 +2,24 @@
 
 ## 1. Visão geral do projeto
 
-Estou construindo uma plataforma chamada **Conferência Contábil Inteligente**.
-
-O objetivo da plataforma é permitir que escritórios contábeis façam conferência automatizada de arquivos contábeis por **cliente** e **competência**.
+A **Conferência Contábil Inteligente (CCI)** é uma plataforma distribuída para automatizar conferências contábeis por **cliente** e **competência**.
 
 A ideia principal é:
 
 1. O usuário acessa a plataforma.
-2. O usuário só enxerga os clientes que tem permissão para acessar.
-3. Um admin ou coordenador pode cadastrar usuários e definir permissões.
-4. Para cada cliente, será criado um modelo de conferência.
-5. Esse modelo terá documentos esperados, critérios de identificação, regras, agendamentos e configurações.
-6. Na primeira configuração, o usuário adiciona documentos de exemplo.
-7. O sistema extrai os dados, normaliza, transforma em variáveis e permite criar regras.
-8. Depois que o modelo estiver pronto, as regras ficam salvas e versionadas.
-9. Nos meses seguintes, o usuário apenas informa ou confirma a pasta da competência.
-10. O sistema importa os documentos, identifica os arquivos, extrai dados, normaliza variáveis, executa as regras salvas, gera logs, auditoria e relatório.
-11. Se houver documento ausente, duplicado ou ambíguo, o sistema deve pausar e pedir confirmação do usuário.
-12. O sistema deve gerar relatório em PDF, Excel e também um balancete anotado com status visual das conferências.
+2. O usuário só enxerga clientes e competências que tem permissão para acessar.
+3. Um admin ou coordenador pode cadastrar usuários, convites, vínculos e permissões.
+4. Para cada cliente, é configurado um modelo de conferência reutilizável.
+5. Esse modelo define documentos esperados, templates esperados, regras associadas, agendamentos e reprocessamentos.
+6. Na configuração inicial, o usuário adiciona documentos de exemplo.
+7. O sistema gera preview estruturado, permite seleção visual, cria anotações, aplica templates e extrai campos/objetos.
+8. Os valores extraídos são normalizados, guardam evidência, confiança, status e podem exigir revisão.
+9. Depois que o modelo estiver pronto, as regras ficam salvas, versionadas e publicadas.
+10. Nos meses seguintes, o usuário apenas informa ou confirma a pasta da competência.
+11. O sistema importa documentos, identifica templates, extrai dados, executa regras, consolida resultado, gera auditoria, timeline e relatórios.
+12. Se houver documento ausente, duplicado, ambíguo ou extração de baixa confiança, a conferência dependente pausa e pede confirmação humana.
 
-A plataforma deve ser profissional, confiável, auditável, escalável e preparada para lidar com muitos arquivos, muitas variáveis e muitas conferências por cliente.
-
----
+A plataforma deve ser profissional, confiável, auditável, escalável e preparada para lidar com muitos arquivos, muitos templates, muitos campos/objetos e muitas conferências por cliente.
 
 ## 2. Conceito central
 
@@ -31,1124 +27,818 @@ O sistema não é apenas um comparador de balancetes.
 
 Ele é uma:
 
-**Plataforma distribuída de conferência contábil baseada em arquivos, extração estruturada, variáveis normalizadas, regras versionadas, execução automatizada, logs, auditoria e relatórios.**
+**Plataforma distribuída de conferência contábil baseada em arquivos, templates, extração estruturada, campos/objetos normalizados, regras versionadas, evidências, auditoria e relatórios.**
 
-O núcleo do sistema é:
+Fluxo central:
 
 ```text
 Arquivo bruto
-→ documento identificado
-→ dados extraídos
-→ dados normalizados
-→ variáveis
-→ regras
-→ execução
-→ resultado
-→ auditoria
+→ documento registrado
+→ preview estruturado
+→ template identificado
+→ campos/objetos extraídos
+→ valores normalizados e revisados
+→ regras versionadas
+→ conferência executada
+→ resultado consolidado
+→ auditoria e timeline
 → relatório
 ```
 
-As regras nunca devem ler diretamente PDF, Excel, Word ou TXT.
+As regras nunca devem ler diretamente PDF, Excel, Word, TXT, imagem ou ZIP.
 
-As regras devem consumir **variáveis normalizadas e confirmadas** pelo `variable-registry-service`.
-
----
+As regras consomem **campos/objetos extraídos**, com valor bruto, valor normalizado, tipo, evidência, confiança, status e versão do template usado. O termo histórico "variável" continua existindo em contratos antigos da Fase 2, mas a arquitetura alvo usa a linguagem **campo/objeto extraído com evidência**.
 
 ## 3. Filosofia da arquitetura
 
-A plataforma deve seguir uma arquitetura distribuída por domínio.
+A plataforma deve seguir uma arquitetura distribuída por domínio, mas sem granularidade prematura.
 
-Não quero monolito.
+Não queremos monólito.
 
-Também não quero uma estrutura improvisada que precise ser refeita depois.
+Também não queremos criar um microserviço para cada etapa técnica cedo demais.
 
-A estrutura será construída serviço por serviço, devagar, mas já respeitando a arquitetura final desde o início.
-
-A separação principal é:
+A decisão oficial é:
 
 ```text
-Control Plane = organiza a conferência
-Data Plane = processa a conferência
-Workers = executam tarefas pesadas
-Packages = padronizam contratos
-Infra = sustenta a plataforma
+Poucos serviços principais
+→ módulos internos bem isolados
+→ workers para tarefas pesadas
+→ packages para contratos
+→ infra Docker como base operacional
+→ módulos preparados para extração futura
 ```
 
----
-
-## 4. Estrutura de diretórios escolhida
+Regra de leitura:
 
 ```text
-apps/
-  web/
-  bff/
-
-services/
-  identity-service/
-  client-service/
-  conference-model-service/
-  schedule-service/
-  document-ingestion-service/
-  document-classification-service/
-  extraction-orchestrator/
-  normalization-service/
-  variable-registry-service/
-  rule-service/
-  execution-control-service/
-  result-service/
-  audit-service/
-  report-service/
-  log-service/
-
-workers/
-  pdf-extractor-worker/
-  excel-extractor-worker/
-  word-extractor-worker/
-  txt-extractor-worker/
-  ocr-worker/
-  ai-extraction-worker/
-  rule-worker/
-  report-worker/
-
-packages/
-  shared-types/
-  shared-events/
-  shared-auth/
-  variable-schema/
-  rule-schema/
-  document-schema/
-  rule-engine/
-
-infra/
-  postgres/
-  minio/
-  temporal/
-  rabbitmq-ou-nats/
-  redis/
-  observability/
+Serviço separa domínio.
+Módulo separa responsabilidade interna.
+Worker executa tarefa pesada.
+Package compartilha contrato.
+Evento integra domínios de forma desacoplada.
 ```
 
----
+## 4. Estrutura alvo oficial
+
+```text
+cci/
+├── apps/
+│   ├── web-app/
+│   └── bff/
+│
+├── services/
+│   ├── identity-service/
+│   ├── client-service/
+│   ├── document-service/
+│   ├── template-service/
+│   ├── extraction-service/
+│   ├── rule-service/
+│   ├── conference-service/
+│   └── report-service/
+│
+├── workers/
+│   ├── parser-worker/
+│   ├── pdf-extractor-worker/
+│   ├── excel-extractor-worker/
+│   ├── ocr-worker/
+│   ├── ai-extraction-worker/
+│   ├── rule-worker/
+│   └── report-worker/
+│
+├── packages/
+│   ├── shared-types/
+│   ├── shared-events/
+│   ├── shared-auth/
+│   ├── document-schema/
+│   ├── template-schema/
+│   ├── annotation-schema/
+│   ├── extraction-schema/
+│   ├── evidence-schema/
+│   ├── rule-schema/
+│   └── rule-engine/
+│
+├── infra/
+│   ├── docker/
+│   ├── postgres/
+│   ├── redis/
+│   ├── rabbitmq/
+│   ├── minio/
+│   ├── temporal/
+│   ├── gateway/
+│   ├── observability/
+│   └── scripts/
+│
+├── docs/
+│   ├── architecture/
+│   ├── phases/
+│   ├── contracts/
+│   └── decisions/
+│
+├── scripts/
+├── docker-compose.yml
+├── docker-compose.override.yml
+├── .env.example
+├── Makefile
+└── README.md
+```
+
+O workspace atual ainda usa `apps/web` como caminho físico da Web App. Esse nome não precisa ser renomeado agora; ele representa logicamente `apps/web-app`.
+
+Também existem scaffolds antigos em `services/` para a arquitetura granular anterior. Eles devem ser tratados como **legados ou placeholders históricos**, não como a lista oficial de serviços finais.
 
 ## 5. Tecnologias principais
 
-### Frontend
+### Apps
+
+- Web App: Next.js, React, TypeScript, Tailwind, shadcn/ui e React Flow.
+- BFF: FastAPI atual em `apps/bff`; NestJS continua aceitável como alternativa futura.
+- A Web conversa somente com o BFF.
+- O BFF agrega dados, propaga contexto, adapta respostas para frontend e não deve concentrar regra de negócio profunda.
+
+### Serviços
+
+- Preferencialmente FastAPI/Python.
+- Cada serviço é dono de seu domínio e de seu schema.
+- REST interno é aceitável como transição explícita.
+- gRPC é o alvo para comunicação interna forte entre BFF e serviços.
+
+### Banco, storage, workflow e eventos
+
+- PostgreSQL: cluster inicial com schemas por domínio.
+- MinIO agora; S3 futuramente.
+- Temporal para workflows longos, retentativas e reprocessamentos.
+- RabbitMQ ou NATS para eventos assíncronos oficiais.
+- Redis para cache, locks, rate limit e estados transitórios.
+- Observabilidade com OpenTelemetry, Sentry, Prometheus e Grafana.
+
+## 6. Serviços e módulos internos
+
+### 6.1 Identity Service
 
 ```text
-Next.js
-React
-TypeScript
-Tailwind
-shadcn/ui
-React Flow
+identity-service/
+├── modules/
+│   ├── users/
+│   ├── auth/
+│   ├── roles/
+│   ├── permissions/
+│   ├── invitations/
+│   └── sessions/
 ```
 
-O frontend fica em:
-
-```text
-apps/web
-```
-
-Ele deve ser responsável por:
-
-- login;
-- dashboard;
-- clientes;
-- competências;
-- importação de arquivos;
-- mapa de documentos;
-- visualização dos documentos;
-- variáveis;
-- regras visuais;
-- execução;
-- logs em tempo real;
-- auditoria;
-- relatórios.
-
----
-
-### BFF / API Gateway
-
-```text
-NestJS ou FastAPI
-```
-
-O BFF fica em:
-
-```text
-apps/bff
-```
-
-O frontend deve conversar apenas com o BFF.
-
-O BFF deve:
-
-- autenticar requisições;
-- validar permissões;
-- chamar serviços internos;
-- juntar dados de vários serviços;
-- devolver respostas prontas para a tela;
-- esconder a complexidade do backend.
-
----
-
-### Serviços backend
-
-Preferencialmente:
-
-```text
-FastAPI Python
-```
-
-Cada serviço deve ter responsabilidade clara e ser dono do próprio domínio.
-
----
-
-### Banco de dados
-
-```text
-PostgreSQL
-```
-
-No início, pode ser um cluster PostgreSQL com schemas por domínio:
-
-```text
-auth
-core
-models
-documents
-extraction
-variables
-rules
-execution
-audit
-reports
-logs
-```
-
-Cada serviço deve ser dono do seu schema/domínio.
-
-Um serviço não deve acessar diretamente as tabelas internas de outro serviço.
-
----
-
-### Storage
-
-```text
-MinIO no início
-S3 no futuro
-```
-
-Usado para:
-
-- arquivos originais;
-- arquivos processados;
-- relatórios;
-- Excel exportado;
-- PDF exportado;
-- balancete anotado;
-- evidências visuais.
-
----
-
-### Workflows
-
-```text
-Temporal
-```
-
-Usado para processos longos e confiáveis:
-
-- extração de documentos;
-- OCR;
-- IA;
-- execução de conferências;
-- geração de relatório;
-- reprocessamentos;
-- retentativas;
-- workflows que podem demorar minutos ou horas.
-
----
-
-### Event Bus
-
-```text
-RabbitMQ ou NATS
-```
-
-Usado para comunicação assíncrona entre serviços.
-
-Eventos importantes:
-
-```text
-file.imported
-document.classified
-document.ambiguous
-document.missing
-document.confirmed
-extraction.started
-raw.extracted
-variables.normalized
-variables.ready
-variables.need_review
-schedule.due
-execution.started
-rule.executed
-result.created
-divergence.found
-execution.finished
-audit.created
-report.generated
-log.created
-```
-
----
-
-### Cache e status temporário
-
-```text
-Redis
-```
-
-Usado para:
-
-- cache;
-- status temporário;
-- progresso de execução;
-- sessões rápidas;
-- locks simples;
-- dados transitórios para logs em tempo real.
-
----
-
-### Observabilidade
-
-```text
-OpenTelemetry
-Sentry
-Prometheus
-Grafana
-```
-
-Desde o início, todo serviço deve ter:
-
-- logs estruturados;
-- `trace_id`;
-- `correlation_id`;
-- métricas;
-- tratamento de erro;
-- healthcheck.
-
----
-
-## 6. Comunicação entre componentes
-
-### Frontend → BFF
-
-Usar:
-
-```text
-REST/HTTPS
-```
-
-Para:
-
-- abrir telas;
-- listar clientes;
-- criar usuários;
-- criar competências;
-- iniciar importação;
-- iniciar execução;
-- buscar resultados;
-- baixar relatórios.
-
----
-
-### Logs/status em tempo real
-
-Usar:
-
-```text
-SSE ou WebSocket
-```
-
-Para:
-
-- logs da execução;
-- progresso da extração;
-- progresso das conferências;
-- notificações de pendência;
-- notificações de erro;
-- status em tempo real.
-
-Preferência inicial:
-
-```text
-SSE para logs/status enviados do servidor para o frontend.
-WebSocket somente se precisar de comunicação bidirecional mais forte.
-```
-
----
-
-### BFF → Serviços internos
-
-Usar:
-
-```text
-gRPC interno
-```
-
-Motivo:
-
-- comunicação rápida;
-- contratos fortes;
-- melhor para serviço-para-serviço;
-- menos ambiguidade entre domínios.
-
-Se algum serviço ainda estiver em fase inicial, REST interno pode ser usado temporariamente, mas a arquitetura alvo é gRPC.
-
----
-
-### Serviços → Processos pesados
-
-Usar:
-
-```text
-Temporal + Workers
-```
-
-Nunca processar PDF pesado, OCR, IA, execução de 100 conferências ou relatório pesado diretamente em uma request HTTP.
-
-Fluxo correto:
-
-```text
-Frontend chama BFF
-BFF chama serviço responsável
-Serviço cria execução
-Temporal inicia workflow
-Workers processam
-Eventos são publicados
-Log Service envia status para a tela
-```
-
----
-
-### Comunicação assíncrona entre serviços
-
-Usar:
-
-```text
-RabbitMQ ou NATS
-```
-
-Para eventos de domínio.
-
-Exemplo:
-
-```text
-document-ingestion-service publica file.imported
-document-classification-service consome file.imported
-document-classification-service publica document.classified
-extraction-orchestrator consome document.confirmed
-normalization-service consome raw.extracted
-variable-registry-service consome variables.normalized
-execution-control-service consome schedule.due ou variables.ready
-result-service consome rule.executed
-audit-service consome result.created
-report-service consome execution.finished
-log-service consome eventos relevantes
-```
-
----
-
-## 7. Responsabilidade de cada serviço
-
-### `identity-service`
-
-Responsável por:
+Responsabilidades:
 
 - usuários;
 - login;
-- sessões;
+- JWT;
+- refresh token;
 - roles;
-- permissões globais;
-- permissões por cliente.
+- permissões;
+- convite por e-mail;
+- confirmação de senha;
+- sessões.
 
-Deve responder perguntas como:
+Eventos importantes:
+
+- `UserCreated`
+- `UserInvited`
+- `UserActivated`
+- `UserDisabled`
+- `RoleAssigned`
+
+### 6.2 Client Service
 
 ```text
-Este usuário pode acessar este cliente?
-Este usuário pode criar outro usuário?
-Este usuário pode editar regra?
-Este usuário pode executar conferência?
-Este usuário pode visualizar relatório?
+client-service/
+├── modules/
+│   ├── clients/
+│   ├── competences/
+│   ├── client_users/
+│   ├── client_folders/
+│   └── client_status/
 ```
 
-Perfis previstos:
-
-```text
-Admin
-Coordenador
-Analista
-Revisor
-Somente leitura
-```
-
----
-
-### `client-service`
-
-Responsável por:
+Responsabilidades:
 
 - clientes;
 - CNPJ;
 - competências;
-- status da competência;
 - usuários vinculados ao cliente;
-- pasta padrão do cliente;
-- dados principais do cliente.
+- permissões por cliente;
+- pasta padrão;
+- status da competência;
+- organização da área de trabalho.
 
-Exemplo de competência:
+Eventos importantes:
 
-```text
-Cliente: Empresa X
-Competência: 05/2026
-Status: aguardando documentos
-```
+- `ClientCreated`
+- `CompetenceCreated`
+- `CompetenceClosed`
+- `ClientUserLinked`
 
----
+O `client-service` já existe ou está em andamento e mantém esse nome físico. Não renomear automaticamente para `workspace-service`.
 
-### `conference-model-service`
-
-Responsável por:
-
-- modelos de conferência por cliente;
-- documentos esperados;
-- critérios de identificação;
-- grupos de conferência;
-- configurações do modelo;
-- versões do modelo;
-- modelo ativo do cliente.
-
-Exemplo:
+### 6.3 Document Service
 
 ```text
-Cliente: Empresa X
-Modelo: Conferência Mensal Completa
-Documentos esperados:
-  - Balancete
-  - Guia INSS
-  - Guia FGTS
-  - Folha
-  - Relatório Fiscal
+document-service/
+├── modules/
+│   ├── documents/
+│   ├── uploads/
+│   ├── storage/
+│   ├── preview/
+│   ├── parsing_jobs/
+│   ├── duplicates/
+│   └── document_status/
 ```
 
-Esse serviço é essencial porque a ideia é configurar uma vez e reutilizar todo mês.
+Responsabilidades:
 
----
-
-### `schedule-service`
-
-Responsável por:
-
-- agendamentos;
-- execução mensal automática;
-- execução por pasta pronta;
-- reprocessamentos agendados;
-- próximas execuções;
-- disparos automáticos.
-
-Ele não executa conferências diretamente.
-
-Ele publica eventos como:
-
-```text
-schedule.due
-folder.ready
-```
-
-Quem executa é o `execution-control-service`.
-
----
-
-### `document-ingestion-service`
-
-Responsável por:
-
+- registrar documentos;
 - upload manual;
-- upload de ZIP;
-- importação de pasta;
-- recebimento de arquivos vindos do agente local;
-- hash do arquivo;
+- upload ZIP;
 - metadados;
-- arquivo bruto imutável;
+- hash;
+- duplicidade;
+- armazenamento no MinIO;
 - vínculo com cliente e competência;
-- armazenamento no MinIO/S3.
+- status do documento;
+- preview estruturado para frontend.
 
-Não deve fazer extração profunda.
+Preview PDF:
 
-Ele apenas registra e armazena os arquivos.
-
----
-
-### `document-classification-service`
-
-Responsável por:
-
-- identificar tipo do documento;
-- comparar com documentos esperados;
-- calcular confiança;
-- detectar duplicidade;
-- detectar ausência;
-- detectar ambiguidade;
-- montar mapa de documentos da competência.
-
-Exemplo:
-
-```text
-Foram encontrados 2 possíveis balancetes:
-1. balancete_preliminar_05_2026.pdf
-2. balancete_final_05_2026.pdf
-
-Sistema recomenda o final, mas o usuário precisa confirmar.
-```
-
-Se um documento obrigatório não for encontrado, o sistema deve pausar as conferências dependentes.
-
----
-
-### `extraction-orchestrator`
-
-Responsável por:
-
-- receber documentos confirmados;
-- decidir quais workers usar;
-- iniciar workflows no Temporal;
-- acompanhar status da extração;
-- controlar falhas e reprocessamentos;
-- coordenar PDF, Excel, Word, TXT, OCR e IA.
-
-Ele não deve conter toda a lógica de extração.
-
-Ele orquestra os workers.
-
----
-
-### `normalization-service`
-
-Responsável por transformar dados brutos em dados padronizados.
-
-Exemplos:
-
-```text
-"R$ 3.500,00" → 3500.00
-"05/2026" → 2026-05
-"00.000.000/0001-00" → CNPJ normalizado
-"2.01.03.001" → código contábil normalizado
-```
-
-Ele deve gerar dados prontos para virar variáveis.
-
----
-
-### `variable-registry-service`
-
-Responsável pelo catálogo central de variáveis.
-
-Guarda:
-
-- variáveis brutas;
-- variáveis normalizadas;
-- variáveis confirmadas;
-- variáveis corrigidas;
-- variáveis ignoradas;
-- evidências;
-- status de revisão;
-- origem da variável;
-- confiança;
-- se a variável é usada em alguma regra.
-
-Exemplo de variável:
-
-```json
-{
-  "key": "guia_inss.valor_total",
-  "value": 3500.00,
-  "type": "currency",
-  "status": "confirmed",
-  "confidence": 0.96,
-  "evidence": {
-    "document_id": "doc_123",
-    "page": 1,
-    "text": "Valor Total R$ 3.500,00"
-  }
-}
-```
-
-As regras devem depender deste serviço.
-
----
-
-### `rule-service`
-
-Responsável por:
-
-- criação de regras;
-- edição;
-- versionamento;
-- validação;
-- teste;
-- ativação;
-- inativação.
-
-As regras podem ser:
-
-- comparação;
-- fórmula;
-- condição;
-- existência;
-- agrupamento;
-- regra composta.
-
-Exemplo de regra:
-
-```json
-{
-  "name": "Conferir INSS",
-  "version": 1,
-  "logic": {
-    "operator": "equals",
-    "left": "balancete.conta.2.01.03.001.saldo_atual",
-    "right": "guia_inss.valor_total",
-    "tolerance": 0.01
-  }
-}
-```
-
-Nunca sobrescrever regras antigas.
-
-Sempre criar nova versão.
-
----
-
-### `execution-control-service`
-
-Responsável por:
-
-- iniciar execução manual;
-- iniciar execução agendada;
-- executar pendentes;
-- reprocessar divergentes;
-- montar fila de conferências;
-- iniciar workflow no Temporal;
-- controlar status geral da execução.
-
-Ele não executa regra diretamente.
-
-Ele chama workflows e workers.
-
----
-
-### `result-service`
-
-Responsável por:
-
-- salvar resultados;
-- consolidar status;
-- armazenar valores comparados;
-- armazenar diferença;
-- armazenar criticidade;
-- armazenar mensagem do resultado.
-
-Status possíveis:
-
-```text
-aprovado
-divergente
-erro
-pendente
-não aplicável
-revisão necessária
-```
-
----
-
-### `audit-service`
-
-Responsável pela explicação de negócio.
-
-Deve responder:
-
-```text
-Qual regra rodou?
-Qual versão da regra?
-Quais documentos foram usados?
-Quais variáveis foram usadas?
-Qual valor foi comparado?
-Qual diferença foi encontrada?
-Qual evidência sustenta o resultado?
-Quem executou?
-Quando executou?
-```
-
-Auditoria não é log técnico.
-
-Auditoria é explicação confiável para usuário contábil.
-
----
-
-### `report-service`
-
-Responsável por:
-
-- relatório PDF;
-- resultado Excel;
-- balancete anotado;
-- relatório por competência;
-- relatório por cliente;
-- exportação da auditoria.
-
-Usa `report-worker` para geração pesada.
-
----
-
-### `log-service`
-
-Responsável por:
-
-- logs de negócio;
-- logs técnicos;
-- linha do tempo da execução;
-- envio de logs/status para o frontend via SSE/WebSocket.
-
-Logs de negócio devem ser claros para usuário comum.
-
-Exemplo:
-
-```text
-Iniciando conferência da competência 05/2026.
-Balancete identificado.
-148 contas extraídas.
-Executando regra INSS.
-Comparando saldo do balancete com valor da guia.
-Conferência aprovada.
-```
-
-Logs técnicos devem conter:
-
-```text
-trace_id
-workflow_id
-worker
-erro
-stack trace
-tempo de execução
-```
-
----
-
-## 8. Workers
-
-Workers são responsáveis por processamento pesado.
-
-Eles devem receber uma tarefa, processar e devolver resultado.
-
-Não devem ser donos de regra de negócio principal.
-
-### `pdf-extractor-worker`
-
-Usa:
-
-```text
-Docling
-pdfplumber
-PyMuPDF
-```
-
-Extrai:
-
-- texto;
 - páginas;
-- tabelas;
+- textos;
+- coordenadas;
+- bbox;
 - blocos;
-- posições;
-- valores.
+- linhas;
+- tabelas prováveis.
 
----
-
-### `excel-extractor-worker`
-
-Usa:
-
-```text
-openpyxl
-pandas
-```
-
-Extrai:
+Preview Excel:
 
 - abas;
-- células;
-- fórmulas;
-- tabelas;
 - linhas;
 - colunas;
-- valores.
+- células;
+- cabeçalhos;
+- intervalos;
+- células mescladas.
 
----
+Eventos importantes:
 
-### `word-extractor-worker`
+- `DocumentUploaded`
+- `DocumentStored`
+- `DocumentPreviewRequested`
+- `DocumentPreviewGenerated`
+- `DocumentDuplicateDetected`
 
-Extrai:
-
-- parágrafos;
-- tabelas;
-- texto;
-- estrutura do documento.
-
----
-
-### `txt-extractor-worker`
-
-Extrai:
-
-- linhas;
-- blocos de texto;
-- valores;
-- datas;
-- códigos;
-- padrões textuais.
-
----
-
-### `ocr-worker`
-
-Usado para documentos escaneados ou imagens.
-
-Pode usar:
+### 6.4 Template Service
 
 ```text
-Tesseract
-PaddleOCR
-serviço externo se necessário
+template-service/
+├── modules/
+│   ├── templates/
+│   ├── categories/
+│   ├── fields/
+│   ├── annotations/
+│   ├── extraction_rules/
+│   ├── matching/
+│   └── versions/
 ```
 
----
+Responsabilidades:
 
-### `ai-extraction-worker`
+- templates;
+- categorias/tipos de documento;
+- formatos aceitos;
+- sinais de identificação;
+- campos e objetos;
+- anotações visuais;
+- regras técnicas de extração;
+- matching de templates;
+- versionamento.
 
-Usado para documentos difíceis.
+Decisão importante:
 
-Pode:
+> O tipo de documento não é o centro da arquitetura. O tipo/categoria é uma classificação do template. O template é o centro do motor de extração.
 
-- interpretar layout confuso;
-- sugerir campos;
-- classificar trechos;
-- extrair JSON estruturado;
-- encontrar evidências.
+Exemplo:
 
-A IA deve ajudar na extração.
+```text
+Template: BALANCETE_DOMINIO_PDF_V1
+Categoria: Balancete
+Formato: PDF
+Estrutura: Hierárquica
+Campos:
+- empresa.nome
+- empresa.cnpj
+- periodo.competencia
+- contas[].codigo
+- contas[].descricao
+- contas[].saldo_atual
+```
 
-A IA não deve decidir a conferência sozinha.
+O módulo `annotations` representa seleções visuais feitas no frontend.
 
----
+Exemplo PDF:
 
-### `rule-worker`
+```text
+page: 1
+bbox: x, y, width, height
+selected_text: "CNPJ: 00.000.000/0001-00"
+field: empresa.cnpj
+```
 
-Executa regras de conferência.
+Exemplo Excel:
 
-Recebe:
+```text
+sheet: Balancete
+column: F
+header: Saldo Atual
+field: contas[].saldo_atual
+```
 
-- regra;
-- competência;
-- variáveis necessárias;
-- modelo do cliente.
+Eventos importantes:
 
-Devolve:
+- `TemplateCreated`
+- `TemplateVersionPublished`
+- `TemplateMatched`
+- `TemplateNotFound`
+- `TemplateAmbiguous`
+- `TemplateAnnotationCreated`
 
-- aprovado;
-- divergente;
-- erro;
-- pendente;
-- não aplicável;
-- revisão necessária.
+### 6.5 Extraction Service
 
----
+```text
+extraction-service/
+├── modules/
+│   ├── jobs/
+│   ├── orchestration/
+│   ├── results/
+│   ├── evidence/
+│   ├── normalization/
+│   └── review/
+```
 
-### `report-worker`
+Responsabilidades:
 
-Gera arquivos pesados:
+- criar jobs de extração;
+- iniciar workflows no Temporal;
+- chamar workers;
+- aplicar templates;
+- normalizar valores;
+- salvar objetos extraídos;
+- salvar evidências;
+- controlar confiança;
+- controlar status;
+- permitir revisão e correção manual.
 
-- PDF;
-- Excel;
+A extração deve salvar:
+
+- objetos extraídos;
+- campos;
+- valor bruto;
+- valor normalizado;
+- tipo de dado;
+- evidência;
+- confiança;
+- status;
+- versão do template usado.
+
+Eventos importantes:
+
+- `ExtractionRequested`
+- `ExtractionStarted`
+- `ExtractionCompleted`
+- `ExtractionFailed`
+- `ExtractionReviewRequired`
+- `ExtractionReviewed`
+
+### 6.6 Rule Service
+
+```text
+rule-service/
+├── modules/
+│   ├── rules/
+│   ├── dsl/
+│   ├── operators/
+│   ├── formulas/
+│   ├── simulation/
+│   └── versions/
+```
+
+Responsabilidades:
+
+- regras de conferência;
+- Rule DSL;
+- operadores;
+- fórmulas;
+- blocos lógicos;
+- validação;
+- versionamento;
+- publicação;
+- simulação/debug.
+
+O futuro **Web Rule Builder** deve ter:
+
+- painel visual estilo canvas;
+- campos/objetos como cards no lado esquerdo;
+- canvas central com drag and drop;
+- painel lateral com condições, comparações, blocos lógicos, fórmulas e equações;
+- geração de JSON/DSL estruturado e executável;
+- validação antes de publicar;
+- simulação com dados reais.
+
+Eventos importantes:
+
+- `RuleCreated`
+- `RulePublished`
+- `RuleDisabled`
+- `RuleSimulationCompleted`
+
+### 6.7 Conference Service
+
+```text
+conference-service/
+├── modules/
+│   ├── models/
+│   ├── executions/
+│   ├── expected_documents/
+│   ├── rule_sets/
+│   ├── results/
+│   ├── audit/
+│   ├── timeline/
+│   └── schedule/
+```
+
+Responsabilidades:
+
+- modelos de conferência;
+- documentos esperados;
+- templates/categorias esperadas;
+- regras associadas;
+- execuções;
+- filas;
+- status;
+- resultados consolidados;
+- auditoria de negócio;
+- timeline;
+- agendamentos;
+- reprocessamentos.
+
+O Conference Service responde:
+
+> A conferência dessa competência passou ou não passou?
+
+Eventos importantes:
+
+- `ConferenceStarted`
+- `ConferenceCompleted`
+- `ConferenceFailed`
+- `ConferenceResultUpdated`
+- `ConferenceAuditGenerated`
+
+### 6.8 Report Service
+
+```text
+report-service/
+├── modules/
+│   ├── report_requests/
+│   ├── pdf_reports/
+│   ├── excel_reports/
+│   ├── annotated_documents/
+│   └── exports/
+```
+
+Responsabilidades:
+
+- relatórios PDF;
+- relatórios Excel;
+- relatório final da conferência;
+- documentos anotados;
 - balancete anotado;
-- relatório final;
-- auditoria exportável.
+- exportações.
 
----
+Eventos importantes:
 
-## 9. Packages compartilhados
+- `ReportRequested`
+- `ReportGenerated`
+- `ReportFailed`
 
-### `shared-types`
+## 7. Workers
 
-Tipos comuns:
-
-```text
-User
-Client
-Competence
-Document
-Variable
-Rule
-Execution
-Result
-Audit
-Report
-```
-
----
-
-### `shared-events`
-
-Eventos oficiais do sistema.
-
-Exemplos:
+Workers não são serviços de negócio. Eles executam tarefas pesadas ou assíncronas.
 
 ```text
-file.imported
-document.classified
-document.ambiguous
-document.missing
-document.confirmed
-raw.extracted
-variables.normalized
-variables.ready
-rule.executed
-result.created
-report.generated
-log.created
+workers/
+├── parser-worker/
+├── pdf-extractor-worker/
+├── excel-extractor-worker/
+├── ocr-worker/
+├── ai-extraction-worker/
+├── rule-worker/
+└── report-worker/
 ```
 
-Todos os serviços devem usar esses eventos padronizados.
+- `parser-worker`: gera preview estruturado. PDF vira texto, coordenadas, páginas, blocos e possíveis tabelas. Excel vira abas, células, colunas, cabeçalhos e intervalos.
+- `pdf-extractor-worker`: aplica templates em PDFs.
+- `excel-extractor-worker`: aplica templates em planilhas.
+- `ocr-worker`: trata documentos escaneados, imagens e PDFs sem camada de texto.
+- `ai-extraction-worker`: extração assistida por IA para casos difíceis. Sempre gera JSON estruturado, evidências, confiança e revisão obrigatória.
+- `rule-worker`: executa regras publicadas usando objetos extraídos e normalizados.
+- `report-worker`: gera relatórios pesados.
 
----
+TXT, CSV, XML e Word entram como workers complementares em fase posterior; eles não definem a arquitetura principal.
 
-### `shared-auth`
+## 8. Packages compartilhados
 
-Responsável por:
+Packages centralizam contratos e bibliotecas puras. Eles não acessam banco, MinIO, RabbitMQ, Temporal ou APIs.
 
-- validação de token;
-- claims do usuário;
-- roles;
-- permissões;
-- middlewares comuns.
+Packages alvo:
 
----
+- `shared-types`
+- `shared-events`
+- `shared-auth`
+- `document-schema`
+- `template-schema`
+- `annotation-schema`
+- `extraction-schema`
+- `evidence-schema`
+- `rule-schema`
+- `rule-engine`
 
-### `variable-schema`
+Roadmap adicional:
 
-Contrato oficial das variáveis.
+- `field-schema`
+- `conference-schema`
 
----
+O package histórico `variable-schema` pertence ao estágio inicial de contratos e deve evoluir para o vocabulário de campos/objetos extraídos, evidências e revisão.
 
-### `rule-schema`
+## 9. Infra
 
-Contrato oficial das regras.
+A pasta `infra/` é bloco oficial da arquitetura.
 
----
-
-### `document-schema`
-
-Contrato oficial dos documentos.
-
----
-
-### `rule-engine`
-
-Biblioteca usada pelo `rule-service` e pelo `rule-worker` para interpretar regras.
-
----
-
-## 10. Ordem de construção
-
-Vou construir serviço por serviço, devagar.
-
-Mesmo que todas as pastas existam desde o início, alguns serviços podem começar apenas com:
-
-- healthcheck;
-- config;
-- logging;
-- conexão com banco;
-- contratos;
-- endpoint básico.
-
-Ordem recomendada:
+Estrutura esperada:
 
 ```text
-1. infra básica
-2. packages
-3. apps/web
-4. apps/bff
-5. identity-service
-6. client-service
-7. conference-model-service
-8. document-ingestion-service
-9. document-classification-service
-10. extraction-orchestrator
-11. pdf-extractor-worker
-12. excel-extractor-worker
-13. normalization-service
-14. variable-registry-service
-15. rule-service
-16. execution-control-service
-17. rule-worker
-18. result-service
-19. audit-service
-20. report-service
-21. log-service
-22. schedule-service
-23. OCR
-24. IA
-25. agente local
+infra/
+├── docker/
+├── postgres/
+├── redis/
+├── rabbitmq/
+├── minio/
+├── temporal/
+├── gateway/
+├── observability/
+└── scripts/
 ```
 
----
+Responsabilidades:
 
-## 11. Regras de arquitetura que a IA deve respeitar
+- `infra/docker`: Dockerfiles base, padrões de build e imagens comuns.
+- `infra/postgres`: schemas, init scripts, migrations globais ou organização dos bancos/schemas por domínio.
+- `infra/redis`: cache, locks, rate limit e estados temporários.
+- `infra/rabbitmq`: exchanges, filas, bindings e definitions.
+- `infra/minio`: buckets e policies.
+- `infra/temporal`: namespaces, dynamic config e workflows esperados.
+- `infra/gateway`: Nginx ou Traefik para roteamento local/futuro.
+- `infra/observability`: OpenTelemetry, Prometheus, Grafana, Loki, Sentry ou estrutura futura.
+- `infra/scripts`: inicialização, reset, buckets, schemas e bootstrap local.
 
-1. Não transformar o projeto em monolito.
-2. Não fazer serviço acessar diretamente tabela interna de outro serviço.
-3. Não fazer regra ler arquivo bruto diretamente.
-4. Não processar tarefa pesada em request HTTP.
-5. Não sobrescrever regra antiga; sempre versionar.
-6. Não deixar IA decidir conferência sozinha.
-7. Sempre salvar evidência da extração.
-8. Sempre salvar logs e auditoria.
-9. Sempre diferenciar log técnico de auditoria de negócio.
-10. Sempre pensar em cliente, competência e permissões.
-11. Sempre usar eventos para comunicação assíncrona.
-12. Sempre usar Temporal para workflows longos.
-13. Sempre manter contratos em `packages`.
-14. Sempre criar código pensando que cada serviço pode evoluir separado.
-15. Sempre explicar qual serviço está sendo alterado, qual evento usa e qual responsabilidade tem.
+Schemas PostgreSQL sugeridos:
 
----
+```text
+identity
+client
+document
+template
+extraction
+rule
+conference
+report
+```
 
-## 12. Frase guia do projeto
+Buckets MinIO sugeridos:
+
+```text
+cci-documents-original
+cci-documents-preview
+cci-extraction-artifacts
+cci-reports
+cci-temp
+```
+
+A estrutura física atual de `infra/` ainda está incompleta em relação ao alvo. Esta documentação define como ela deve ser entendida e evoluída, sem exigir reimplementação de containers nesta tarefa.
+
+## 10. Módulos extraíveis no futuro
+
+Decisão arquitetural:
+
+> Os serviços serão criados como serviços modulares extraíveis.
+
+Isso significa:
+
+- hoje um módulo roda dentro de um serviço maior;
+- amanhã, se crescer demais, pode virar serviço próprio;
+- para isso, cada módulo deve ter contrato público, eventos próprios, testes próprios e baixo acoplamento.
+
+Estrutura recomendada para módulos grandes:
+
+```text
+module/
+├── public/
+│   ├── commands.py
+│   ├── queries.py
+│   ├── responses.py
+│   └── events.py
+│
+├── domain/
+│   ├── entities.py
+│   ├── value_objects.py
+│   └── errors.py
+│
+├── application/
+│   ├── use_cases.py
+│   ├── service.py
+│   └── ports.py
+│
+├── infrastructure/
+│   ├── repository.py
+│   ├── local_adapters.py
+│   └── external_clients.py
+│
+├── api/
+│   └── routes.py
+│
+└── tests/
+```
+
+Regra obrigatória:
+
+> Um módulo não deve acessar diretamente banco/repository interno de outro módulo se esse módulo puder virar serviço no futuro. Use portas/interfaces/adapters.
+
+Errado:
+
+```python
+from modules.templates.repository import TemplateRepository
+```
+
+Melhor:
+
+```python
+from modules.matching.application.ports import TemplateCatalogPort
+```
+
+Hoje a implementação pode ser local. No futuro pode virar HTTP, gRPC ou evento.
+
+## 11. Nova ordem das fases
+
+```text
+Fase 1A — Chão técnico
+Docker Compose, PostgreSQL, Redis, RabbitMQ, MinIO, Temporal, estrutura de pastas, .env, README e Makefile.
+
+Fase 1B — Base padrão dos serviços
+Template FastAPI, healthcheck, ready, config, logs, correlation_id e conexão básica.
+
+Fase 2 — Packages compartilhados
+shared-types, shared-events, shared-auth, document-schema, template-schema, annotation-schema, extraction-schema, evidence-schema, field-schema, rule-schema, conference-schema e rule-engine inicial.
+
+Fase 3 — BFF inicial
+Porta de entrada da plataforma para a web conversar com os serviços.
+
+Fase 4 — Identity Service
+Usuários, login, JWT, roles, permissões, convites e confirmação de senha.
+
+Fase 5 — Web inicial
+Next.js, layout, login, sessão, rotas protegidas, dashboard e navegação principal.
+
+Fase 6 — Client Service
+Clientes, CNPJ, competências, usuários vinculados ao cliente, permissões por cliente e pasta padrão.
+
+Fase 7 — Document Service
+Upload, ZIP, metadados, hash, duplicidade, MinIO, vínculo cliente/competência e status do documento.
+
+Fase 8 — Parser Worker e Preview
+Parser de PDF/Excel e geração de modelo selecionável: páginas, textos, coordenadas, células, blocos e tabelas.
+
+Fase 9 — Web Document Viewer
+Leitor PDF/Excel no frontend, seleção de texto, célula, coluna, área, tabela e destaque de evidências.
+
+Fase 10 — Template Service
+Templates, categorias/tipos, formatos, campos, objetos, sinais de identificação, regras de extração, anotações e versionamento.
+
+Fase 11 — Template Matching
+Gerar perfil do documento, filtrar templates, ranquear candidatos, escolher template vencedor ou sinalizar template não encontrado/ambíguo.
+
+Fase 12 — Template Builder / Annotation
+Criar templates visualmente selecionando textos, células, colunas e tabelas, associando seleções a campos/objetos e gerando regras reutilizáveis.
+
+Fase 13 — Extraction Service
+Jobs de extração, Temporal, status, retries, aplicação de templates e chamada dos workers.
+
+Fase 14 — Extractor Workers básicos
+PDF e Excel aplicando templates para extrair objetos, campos, tabelas e hierarquias.
+
+Fase 15 — Normalização e Resultados da Extração
+Normalizar valores, datas, CNPJ, contas e salvar objetos extraídos, evidências, confiança e status.
+
+Fase 16 — Web Extraction Review
+Cards de campos/objetos, evidências destacadas, correção manual, aprovação e reprocessamento.
+
+Fase 17 — Rule DSL
+Estrutura interna das regras: campos, operadores, condições, fórmulas, blocos lógicos, mensagens e severidade.
+
+Fase 18 — Web Rule Builder
+Canvas visual com cards de variáveis/objetos, drag and drop, blocos lógicos, condições, comparações, fórmulas e equações.
+
+Fase 19 — Rule Service
+Salvar, validar, versionar, ativar, publicar e desativar regras.
+
+Fase 20 — Rule Simulator
+Testar regras com dados reais, mostrando cálculos, caminho lógico, campos usados, divergências e evidências.
+
+Fase 21 — Conference Service
+Modelos de conferência, documentos esperados, templates esperados, regras associadas, execuções, fila, status e resultado consolidado.
+
+Fase 22 — Rule Worker
+Executar regras usando objetos extraídos e valores normalizados.
+
+Fase 23 — Results, Audit e Timeline
+Resultados consolidados, diferenças, criticidade, explicação de negócio, timeline e eventos para o frontend.
+
+Fase 24 — Report Service / Report Worker
+Relatórios PDF, Excel, documentos anotados, balancete anotado e geração pesada de arquivos.
+
+Fase 25 — Agendamentos e reprocessamentos
+Execuções mensais, pasta pronta, reprocessamentos automáticos e rotinas recorrentes.
+
+Fase 26 — Agente Local
+Monitorar pastas locais/rede e enviar arquivos para a plataforma.
+
+Fase 27 — Workers complementares
+TXT, CSV, XML, Word e melhorias nos extratores.
+
+Fase 28 — OCR Worker
+Documentos escaneados, imagens e PDFs sem camada de texto.
+
+Fase 29 — AI Extraction Worker
+Extração assistida por IA para documentos difíceis, sempre com JSON estruturado, evidências, confiança e revisão.
+
+Fase 30 — Observabilidade completa
+OpenTelemetry, Sentry, Prometheus, Grafana, métricas, tracing e alertas.
+
+Fase 31 — Testes e qualidade
+Testes unitários, integração, contratos, workflows, parsers, templates, extração, evidências, regras e regressão.
+
+Fase 32 — CI/CD
+Pipeline de build, testes, migrations, deploy e versionamento.
+
+Fase 33 — Produção
+Ambiente real, backups, segurança, permissões, monitoramento e documentação final.
+```
+
+## 12. Regras arquiteturais que a IA deve respeitar
+
+1. Não transformar o projeto em monólito.
+2. Não criar serviço separado para cada etapa técnica cedo demais.
+3. Criar poucos serviços principais, com módulos internos bem definidos.
+4. Módulos internos devem ser extraíveis no futuro.
+5. Um serviço não acessa diretamente tabelas internas de outro serviço.
+6. BFF agrega dados para o frontend, não contém regra de negócio profunda.
+7. Workers executam tarefas pesadas ou assíncronas.
+8. `document-service` é dono dos arquivos e previews.
+9. `template-service` é dono dos templates, anotações, campos e matching.
+10. `extraction-service` é dono dos jobs, resultados, evidências, normalização e revisão.
+11. `rule-service` é dono da DSL, regras, operadores, fórmulas, simulação e versionamento.
+12. `conference-service` é dono da execução de conferência, resultados, auditoria, timeline e agendamentos.
+13. `report-service` é dono dos relatórios e exportações.
+14. Infra deve permitir subir o ambiente com Docker.
+15. Tipo de documento é categoria do template, não o centro do motor.
+16. Template é o centro do motor de extração.
+17. Campos/objetos extraídos substituem a ideia antiga de um catálogo separado de variáveis.
+18. Anotações visuais no frontend devem poder virar regras reutilizáveis de template.
+19. Regras no frontend devem futuramente ser criadas em canvas visual com cards, blocos lógicos, fórmulas e condições.
+20. IA auxilia extração, mas sempre com JSON estruturado, evidência, confiança e revisão obrigatória.
+21. Sempre pensar em cliente, competência, permissões, evidências e auditoria.
+
+## 13. Frase guia do projeto
 
 ```text
 Configura uma vez por cliente.
 Todo mês importa ou detecta a pasta da competência.
-O sistema identifica documentos, extrai dados, normaliza variáveis, executa regras salvas, gera logs, auditoria e relatórios.
+O sistema identifica documentos, aplica templates, extrai e normaliza campos/objetos, executa regras salvas, gera evidências, auditoria, timeline e relatórios.
 ```
 
-A plataforma deve ser construída com a seguinte mentalidade:
+Mentalidade:
 
 ```text
-Control Plane organiza.
-Data Plane processa.
-Workers executam.
-Packages padronizam.
-Infra sustenta.
+Apps dão a experiência.
+BFF protege e agrega.
+Services são domínios.
+Modules separam responsabilidades internas.
+Workers executam peso.
+Packages padronizam contratos.
+Infra sustenta tudo.
 Auditoria gera confiança.
 ```

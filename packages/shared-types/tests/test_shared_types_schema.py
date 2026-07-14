@@ -12,3 +12,8 @@ def test_shared_types_example_matches_schema() -> None:
     example = json.loads((PACKAGE / "examples" / "shared-types.example.json").read_text(encoding="utf-8"))
 
     Draft202012Validator(schema, format_checker=FormatChecker()).validate(example)
+
+
+def test_primitives_schema_is_valid() -> None:
+    schema = json.loads((PACKAGE / "schemas" / "primitives.schema.json").read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(schema)

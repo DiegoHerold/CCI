@@ -40,8 +40,9 @@ Não são usados `localStorage`, `sessionStorage`, refresh token em JavaScript o
 - `src/components`: UI shadcn-style, marca, layout, cockpit e estados;
 - `src/features/auth`: sessão, guards e permissões;
 - `src/features/context`: contexto operacional, cliente e competência;
+- `src/features/document-viewer`: viewer PDF/Excel baseado em preview estruturado, seleção visual e payloads para anotações futuras;
 - `src/lib/api`: cliente HTTP tipado e APIs do BFF;
 - `src/types`: DTOs de resposta da fronteira Web/BFF;
 - `src/test`: setup e fixtures apenas de teste.
 
-Detalhes completos, contratos e limitações estão em `docs/fase-5-web-inicial.md`.
+Detalhes completos, contratos e limitações estão em `docs/fase-5-web-inicial.md` e `docs/fase-9-web-document-viewer.md`.

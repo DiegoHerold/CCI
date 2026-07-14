@@ -1,5 +1,7 @@
 # Shared Types
 
+Tipos comuns de identidade, tempo, dinheiro, intervalos, confiança, status e paginação. `schemas/primitives.schema.json` contém os value objects mínimos; contratos de domínio continuam nos packages específicos.
+
 Fonte comum para os tipos e estados centrais da CCI. O JSON Schema é canônico; `python/models.py` oferece modelos Pydantic e `typescript/index.ts` oferece interfaces equivalentes para serviços, workers, BFF e frontend.
 
 Contém usuários, clientes, competências, documentos, variáveis, regras, execuções, resultados, auditoria, relatórios e envelope de eventos. Não contém persistência, autenticação real nem integrações.

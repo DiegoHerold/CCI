@@ -1,0 +1,23 @@
+{
+  "rabbit_version": "3.13",
+  "vhosts": [{"name": "/"}],
+  "exchanges": [
+    {"name": "cci.events", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false, "internal": false, "arguments": {}}
+  ],
+  "queues": [
+    {"name": "cci.document", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {}},
+    {"name": "cci.template", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {}},
+    {"name": "cci.extraction", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {}},
+    {"name": "cci.rule", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {}},
+    {"name": "cci.conference", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {}},
+    {"name": "cci.report", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {}}
+  ],
+  "bindings": [
+    {"source": "cci.events", "vhost": "/", "destination": "cci.document", "destination_type": "queue", "routing_key": "document.#", "arguments": {}},
+    {"source": "cci.events", "vhost": "/", "destination": "cci.template", "destination_type": "queue", "routing_key": "template.#", "arguments": {}},
+    {"source": "cci.events", "vhost": "/", "destination": "cci.extraction", "destination_type": "queue", "routing_key": "extraction.#", "arguments": {}},
+    {"source": "cci.events", "vhost": "/", "destination": "cci.rule", "destination_type": "queue", "routing_key": "rule.#", "arguments": {}},
+    {"source": "cci.events", "vhost": "/", "destination": "cci.conference", "destination_type": "queue", "routing_key": "conference.#", "arguments": {}},
+    {"source": "cci.events", "vhost": "/", "destination": "cci.report", "destination_type": "queue", "routing_key": "report.#", "arguments": {}}
+  ]
+}

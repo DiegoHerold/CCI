@@ -10,7 +10,9 @@ Os packages contêm somente tipos, enums, validações puras, exemplos e o motor
 
 ## Fluxo contratual
 
-Documentos preservam integridade e storage; evidências localizam a origem; variáveis normalizam os valores; regras versionadas referenciam as variáveis; o rule-engine avalia o mapa em memória; eventos versionados carregam o resultado entre domínios no futuro.
+Documentos preservam integridade e storage; evidências localizam a origem; campos/objetos extraídos guardam valor bruto, valor normalizado, tipo, confiança e status; regras versionadas referenciam esses campos/objetos; o rule-engine avalia o mapa em memória; eventos versionados carregam o resultado entre domínios no futuro.
+
+O package `variable-schema` criado nesta fase é histórico e representa o primeiro contrato de valores normalizados consumidos por regras. Na arquitetura alvo, ele evolui para `extraction-schema`, `evidence-schema` e, quando necessário, `field-schema`, mantendo compatibilidade até uma migração explícita.
 
 ## Testes
 

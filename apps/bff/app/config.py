@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     identity_service_url: str = "http://identity-service:8101"
     client_service_url: str = "http://client-service:8102"
+    document_service_url: str = "http://document-service:8110"
     conference_model_service_url: str = "http://conference-model-service:8103"
     schedule_service_url: str = "http://schedule-service:8104"
     document_ingestion_service_url: str = "http://document-ingestion-service:8110"

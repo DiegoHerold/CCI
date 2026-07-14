@@ -1,3 +1,5 @@
-# Execution Control Service
+# Scaffold legado — Execution Control Service
 
-Responsabilidade futura: iniciar e acompanhar execuções manuais, agendadas e reprocessamentos. Status atual: scaffold criado, sem implementação.
+Scaffold legado da arquitetura granular anterior. Execuções de conferência, fila, status, reprocessamentos e resultado consolidado pertencem ao `conference-service`.
+
+Status atual: scaffold sem implementação funcional. Não é serviço canônico novo.

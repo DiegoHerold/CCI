@@ -20,7 +20,7 @@ export const navigationGroups = [
       { label: "Dashboard", href: "/dashboard", icon: Gauge },
       { label: "Clientes", href: "/clients", icon: Building2, permission: "clients:read" },
       { label: "Competências", href: "/competencies", icon: CalendarRange, permission: "client-competencies:read" },
-      { label: "Documentos", href: "/documents", icon: FileStack, permission: "conferences:read", future: true },
+      { label: "Documentos", href: "/documents", icon: FileStack, permission: "conferences:read" },
       { label: "Execuções", href: "/executions", icon: Activity, permission: "conferences:read", future: true },
     ],
   },

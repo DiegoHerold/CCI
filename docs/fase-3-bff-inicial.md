@@ -11,7 +11,7 @@ Disponibilizar a primeira porta de entrada HTTP da CCI. A futura web em `http://
 - `/api/v1/platform/status`: mostra os serviços futuros como `not_connected`;
 - `/api/v1/auth/me`: usuário administrativo placeholder de desenvolvimento;
 - `/api/v1/clients`: lista vazia até existir client-service;
-- `/api/v1/executions`: lista vazia até existir execution-control-service;
+- `/api/v1/executions`: lista vazia até existir o módulo de execuções do `conference-service`;
 - `/api/v1/logs/stream`: SSE finito de demonstração.
 
 ## Correlation ID e logs
@@ -22,7 +22,7 @@ Logs de request incluem método, caminho, status e duração, além de timestamp
 
 ## SSE placeholder
 
-O stream envia `connected`, `heartbeat` e `placeholder_log`, todos com o mesmo correlation ID. Não há conexão com RabbitMQ ou log-service; o fluxo real futuro será `log-service → BFF → frontend`.
+O stream envia `connected`, `heartbeat` e `placeholder_log`, todos com o mesmo correlation ID. Não há conexão com RabbitMQ nem timeline/auditoria do `conference-service`; o fluxo real futuro será `eventos oficiais → BFF → frontend`, com logs técnicos separados da auditoria de negócio.
 
 ## Executar e testar
 

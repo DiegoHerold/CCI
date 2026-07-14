@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cci.local/schemas/conferences/conference.schema.json",
+  "title": "CCI Conference Execution",
+  "type": "object",
+  "required": ["execution_id", "model_id", "client_id", "competence_id", "status", "expected_documents", "rule_versions", "timeline"],
+  "properties": {
+    "execution_id": {"type": "string"},
+    "model_id": {"type": "string"},
+    "client_id": {"type": "string"},
+    "competence_id": {"type": "string"},
+    "status": {"type": "string", "enum": ["pending", "waiting_documents", "running", "review", "completed", "failed", "cancelled"]},
+    "expected_documents": {"type": "array", "items": {"$ref": "#/$defs/ExpectedDocument"}},
+    "rule_versions": {"type": "array", "items": {"type": "object", "required": ["rule_id", "version"], "properties": {"rule_id": {"type": "string"}, "version": {"type": "integer", "minimum": 1}}, "additionalProperties": false}},
+    "result": {"anyOf": [{"$ref": "#/$defs/ConferenceResult"}, {"type": "null"}]},
+    "timeline": {"type": "array", "items": {"$ref": "#/$defs/TimelineEvent"}}
+  },
+  "$defs": {
+    "ExpectedDocument": {"type": "object", "required": ["category", "required"], "properties": {"category": {"type": "string"}, "template_id": {"type": ["string", "null"]}, "required": {"type": "boolean"}}, "additionalProperties": false},
+    "ConferenceResult": {"type": "object", "required": ["status", "approved_count", "divergent_count"], "properties": {"status": {"type": "string", "enum": ["approved", "divergent", "needs_review", "error"]}, "approved_count": {"type": "integer", "minimum": 0}, "divergent_count": {"type": "integer", "minimum": 0}}, "additionalProperties": false},
+    "TimelineEvent": {"type": "object", "required": ["event_type", "occurred_at", "correlation_id"], "properties": {"event_type": {"type": "string"}, "occurred_at": {"type": "string", "format": "date-time"}, "actor_id": {"type": ["string", "null"]}, "correlation_id": {"type": "string"}, "details": {"type": "object"}}, "additionalProperties": false}
+  },
+  "additionalProperties": false
+}
